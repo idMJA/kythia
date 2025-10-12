@@ -19,8 +19,9 @@ module.exports = async (bot, member) => {
     const guild = member.guild;
 
     let inviteChannelId = null;
+    let setting;
     try {
-        const setting = await ServerSetting.getCache({ guildId: guild.id });
+        setting = await ServerSetting.getCache({ guildId: guild.id });
         inviteChannelId = setting?.inviteChannelId;
     } catch (e) {}
 
@@ -29,7 +30,6 @@ module.exports = async (bot, member) => {
     const me = guild.members.me || (await guild.members.fetchMe());
     if (!me.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
         console.warn(`[INVITE TRACKER] Missing 'Manage Guild' permission in ${guild.name}`);
-        throw new Error('Missing Permissions: MANAGE_GUILD');
     }
 
     const cacheBefore = getGuildInviteCache(guild.id);
