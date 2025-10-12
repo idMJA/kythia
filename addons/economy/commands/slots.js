@@ -60,7 +60,7 @@ module.exports = {
             return interaction.reply({ embeds: [embed], ephemeral: true });
         }
 
-        // Not enough cash
+        // Not enough coin
         if (user.kythiaCoin < bet) {
             const embed = new EmbedBuilder()
                 .setColor('Red')

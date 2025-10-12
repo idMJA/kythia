@@ -13,7 +13,7 @@ const { t } = require('@utils/translator');
 
 module.exports = {
     subcommand: true,
-    data: (subcommand) => subcommand.setName('daily').setDescription('💰 Collect your daily cash.'),
+    data: (subcommand) => subcommand.setName('daily').setDescription('💰 Collect your daily kythia coin.'),
     async execute(interaction) {
         await interaction.deferReply();
 
@@ -39,9 +39,9 @@ module.exports = {
             return interaction.editReply({ embeds: [embed] });
         }
 
-        // Randomize the daily cash reward between 50 and 150
-        const randomCash = Math.floor(Math.random() * 101) + 50;
-        user.kythiaCoin += randomCash;
+        // Randomize the daily coin reward between 50 and 150
+        const randomCoin = Math.floor(Math.random() * 101) + 50;
+        user.kythiaCoin += randomCoin;
         user.lastDaily = Date.now();
         user.changed('kythiaCoin', true);
         user.changed('lastDaily', true);
@@ -50,7 +50,7 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL())
-            .setDescription(await t(interaction, 'economy_daily_daily_success', { amount: randomCash }))
+            .setDescription(await t(interaction, 'economy_daily_daily_success', { amount: randomCoin }))
             // .setTimestamp()
             .setFooter(await embedFooter(interaction));
         return interaction.editReply({ embeds: [embed] });

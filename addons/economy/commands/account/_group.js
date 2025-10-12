@@ -8,5 +8,5 @@
 
 module.exports = {
     subcommand: true,
-    data: (group) => group.setName('account').setDescription('Manage your bank account.'),
+    data: (group) => group.setName('account').setDescription('Manage your kythia bank account.'),
 };

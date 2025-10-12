@@ -15,7 +15,7 @@ module.exports = {
     data: (subcommand) =>
         subcommand
             .setName('withdraw')
-            .setDescription('Withdraw your cash from the bank.')
+            .setDescription('Withdraw your kythia coin from kythia bank.')
             .addIntegerOption((option) => option.setName('amount').setDescription('Amount to withdraw').setRequired(true)),
     async execute(interaction) {
         await interaction.deferReply();
@@ -33,7 +33,7 @@ module.exports = {
                 return interaction.editReply({ embeds: [embed] });
             }
 
-            if (user.bank < amount) {
+            if (user.kythiaBank < amount) {
                 const embed = new EmbedBuilder()
                     .setColor('Red')
                     .setDescription(await t(interaction, 'economy_withdraw_withdraw_not_enough_bank'))
@@ -43,9 +43,9 @@ module.exports = {
                 return interaction.editReply({ embeds: [embed] });
             }
 
-            user.bank -= amount;
+            user.kythiaBank -= amount;
             user.kythiaCoin += amount;
-            user.changed('bank', true);
+            user.changed('kythiaBank', true);
             user.changed('kythiaCoin', true);
             await user.saveAndUpdateCache('userId');
 

@@ -7,7 +7,7 @@
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { embedFooter } = require('@utils/discord');
-const User = require('@coreModels/User');
+const KythiaUser = require('@coreModels/KythiaUser');
 const { t } = require('@utils/translator');
 
 module.exports = {
@@ -43,7 +43,7 @@ module.exports = {
             const userId = interaction.user.id;
 
             // Check if user has an account
-            const existingUser = await User.getCache({ userId: userId, guildId: interaction.guild.id });
+            const existingUser = await KythiaUser.getCache({ userId: userId });
             if (!existingUser) {
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)

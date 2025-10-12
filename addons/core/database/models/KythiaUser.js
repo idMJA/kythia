@@ -22,10 +22,10 @@ class KythiaUser extends KythiaModel {
                 premiumServerIds: { type: DataTypes.JSON, allowNull: true },
                 premiumExpiresAt: { type: DataTypes.DATE, defaultValue: null },
 
-                kythiaCoin: { type: DataTypes.INTEGER, defaultValue: 0 },
-                kythiaRuby: { type: DataTypes.INTEGER, defaultValue: 0 },
+                kythiaCoin: { type: DataTypes.BIGINT, defaultValue: 0 },
+                kythiaRuby: { type: DataTypes.BIGINT, defaultValue: 0 },
                 
-                bank: { type: DataTypes.INTEGER, defaultValue: 0 },
+                kythiaBank: { type: DataTypes.BIGINT, defaultValue: 0 },
                 bankType: { type: DataTypes.STRING, defaultValue: 'bca' },
                 hackMastered: { type: DataTypes.INTEGER, defaultValue: 10, max: 100 },
                 careerMastered: { type: DataTypes.INTEGER, defaultValue: 1, max: 10 },

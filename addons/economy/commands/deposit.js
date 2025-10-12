@@ -15,7 +15,7 @@ module.exports = {
     data: (subcommand) =>
         subcommand
             .setName('deposit')
-            .setDescription('💰 Deposit your cash into the bank.')
+            .setDescription('💰 Deposit your kythia coin into kythia bank.')
             .addStringOption((option) =>
                 option
                     .setName('type')
@@ -85,9 +85,9 @@ module.exports = {
         }
 
         user.kythiaCoin -= amount;
-        user.bank += amount;
+        user.kythiaBank += amount;
         user.changed('kythiaCoin', true);
-        user.changed('bank', true);
+        user.changed('kythiaBank', true);
         await user.saveAndUpdateCache('userId');
 
         const embed = new EmbedBuilder()

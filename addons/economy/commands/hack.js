@@ -74,8 +74,8 @@ module.exports = {
             return interaction.editReply({ embeds: [embed] });
         }
 
-        // Target must have money in bank
-        if (target.bank <= 0) {
+        // Target must have money in kythiaBank
+        if (target.kythiaBank <= 0) {
             const embed = new EmbedBuilder()
                 .setColor('Red')
                 .setDescription(await t(interaction, 'economy_hack_hack_target_no_bank'))
@@ -85,8 +85,8 @@ module.exports = {
             return interaction.editReply({ embeds: [embed] });
         }
 
-        // User must have enough money in bank to hack
-        if (user.bank <= 20) {
+        // User must have enough money in kythiaBank to hack
+        if (user.kythiaBank <= 20) {
             const embed = new EmbedBuilder()
                 .setColor('Red')
                 .setDescription(await t(interaction, 'economy_hack_hack_user_no_bank'))
@@ -121,14 +121,14 @@ module.exports = {
             const hackResult = Math.random() < ((user.hackMastered || 10) / 100) * successChance ? 'success' : 'failure';
 
             if (hackResult === 'success') {
-                // Transfer all target's bank to user
-                user.bank += target.bank;
+                // Transfer all target's kythiaBank to user
+                user.kythiaBank += target.kythiaBank;
                 if (user.hackMastered < 100) {
                     user.hackMastered = (user.hackMastered || 10) + 1;
                 }
-                target.bank = 0;
-                user.changed('bank', true);
-                target.changed('bank', true);
+                target.kythiaBank = 0;
+                user.changed('kythiaBank', true);
+                target.changed('kythiaBank', true);
                 await user.saveAndUpdateCache('userId');
                 await target.saveAndUpdateCache('userId');
 
@@ -147,11 +147,11 @@ module.exports = {
             } else {
                 // Penalty if failed
                 const penalty = Math.floor(Math.random() * 20) + 1;
-                if (user.bank >= penalty) {
-                    user.bank -= penalty;
-                    target.bank += penalty;
-                    user.changed('bank', true);
-                    target.changed('bank', true);
+                if (user.kythiaBank >= penalty) {
+                    user.kythiaBank -= penalty;
+                    target.kythiaBank += penalty;
+                    user.changed('kythiaBank', true);
+                    target.changed('kythiaBank', true);
                     await user.saveAndUpdateCache('userId');
                     await target.saveAndUpdateCache('userId');
                 }

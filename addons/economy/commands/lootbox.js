@@ -8,7 +8,7 @@
 const { checkCooldown } = require('@utils/time');
 const { embedFooter } = require('@utils/discord');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const User = require('@coreModels/User');
+const KythiaUser = require('@coreModels/KythiaUser');
 const ServerSetting = require('@coreModels/ServerSetting');
 const { t } = require('@utils/translator');
 
@@ -18,7 +18,7 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply();
 
-        let user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
                 .setColor(kythia.bot.color)
@@ -43,9 +43,9 @@ module.exports = {
 
         // Randomize lootbox reward between 100 and 500
         const randomReward = Math.floor(Math.random() * 401) + 100;
-        user.cash += randomReward;
+        user.kythiaCoin += randomReward;
         user.lastLootbox = Date.now();
-        user.changed('cash', true);
+        user.changed('kythiaCoin', true);
         user.changed('lastLootbox', true);
         await user.saveAndUpdateCache('userId');
 

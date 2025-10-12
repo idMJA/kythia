@@ -7,7 +7,7 @@
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Inventory = require('@coreModels/Inventory');
-const User = require('@coreModels/User');
+const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
 
@@ -16,7 +16,7 @@ module.exports = {
     data: (subcommand) => subcommand.setName('inventory').setDescription('🛄 View all items in your inventory.'),
     async execute(interaction) {
         await interaction.deferReply();
-        let user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
                 .setColor(kythia.bot.color)

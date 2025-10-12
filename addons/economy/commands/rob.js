@@ -165,7 +165,7 @@ module.exports = {
                 .setDescription(
                     await t(interaction, 'economy_rob_rob_fail', {
                         target: targetUser.username,
-                        penalty: poison ? await t(interaction, 'economy_rob_rob_fail_penalty_all') : `${robAmount} cash`,
+                        penalty: poison ? await t(interaction, 'economy_rob_rob_fail_penalty_all') : `${robAmount} kythia coin`,
                         guard: guard ? await t(interaction, 'economy_rob_rob_fail_guard') : '',
                         poison: poison ? await t(interaction, 'economy_rob_rob_fail_poison') : '',
                     })

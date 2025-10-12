@@ -37,7 +37,7 @@ module.exports = {
                 return interaction.editReply({ embeds: [embed] });
             }
 
-            if (giver.bank < amount) {
+            if (giver.kythiaBank < amount) {
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)
                     .setDescription(await t(interaction, 'economy_transfer_transfer_not_enough_bank'))
@@ -68,7 +68,7 @@ module.exports = {
             if (giver.bankType !== receiver.bankType) {
                 fee = Math.floor(amount * 0.05);
             }
-            if (giver.bank < amount + fee) {
+            if (giver.kythiaBank < amount + fee) {
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)
                     .setDescription(await t(interaction, 'economy_transfer_transfer_not_enough_bank_fee', { fee }))
@@ -113,11 +113,11 @@ module.exports = {
             collector.on('collect', async (i) => {
                 if (i.customId === 'confirm') {
                     // Do the transfer
-                    giver.bank -= amount + fee;
-                    receiver.bank += amount;
+                    giver.kythiaBank -= amount + fee;
+                    receiver.kythiaBank += amount;
 
-                    giver.changed('bank', true);
-                    receiver.changed('bank', true);
+                    giver.changed('kythiaBank', true);
+                    receiver.changed('kythiaBank', true);
                     await giver.saveAndUpdateCache('userId');
                     await receiver.saveAndUpdateCache('userId');
 

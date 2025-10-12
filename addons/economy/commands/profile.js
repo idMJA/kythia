@@ -6,7 +6,7 @@
  * @version 0.9.9-beta-rc.1
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const User = require('@coreModels/User');
+const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
 
@@ -34,7 +34,7 @@ module.exports = {
         }
 
         // Fetch user data
-        const userData = await User.getCache({ userId: userId, guildId: guildId });
+        const userData = await KythiaUser.getCache({ userId: userId });
         if (!userData) {
             const embed = new EmbedBuilder()
                 .setColor(kythia.bot.color)
@@ -50,9 +50,9 @@ module.exports = {
         let xp = userData.xp || 0;
         let nextLevelXp = level * 100 || 100;
 
-        // Bank & cash
-        let bank = userData.bank || 0;
-        let cash = userData.cash || 0;
+        // Bank & coin
+        let bank = userData.kythiaBank || 0;
+        let coin = userData.kythiaCoin || 0;
         let bankType = userData.bankType ? userData.bankType.toUpperCase() : '-';
 
         // Build embed using t for all text
@@ -103,7 +103,7 @@ module.exports = {
                         bankType: bankType !== '-' ? `(${bankType})` : '',
                     }),
                     await t(interaction, 'economy_profile_profile_cash_line', {
-                        cash: cash.toLocaleString(),
+                        cash: coin.toLocaleString(),
                     }),
                 ].join('\n')
             )

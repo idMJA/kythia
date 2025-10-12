@@ -6,7 +6,7 @@
  * @version 0.9.9-beta-rc.1
  */
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const User = require('@coreModels/User');
+const KythiaUser = require('@coreModels/KythiaUser');
 const Inventory = require('@coreModels/Inventory');
 const { embedFooter } = require('@utils/discord');
 const shopData = require('../helpers/items');
@@ -14,14 +14,11 @@ const { t } = require('@utils/translator');
 
 const allItems = Object.values(shopData).flat();
 
-/**
- * Membuat Embed untuk toko berdasarkan kategori dan halaman
- */
 async function generateShopEmbed(interaction, user, category, page) {
     const itemsToShow =
         category === 'all' ? allItems.filter((item) => item.buyable) : (shopData[category] || []).filter((item) => item.buyable);
 
-    const totalPages = Math.max(1, Math.ceil(itemsToShow.length / 5)); // 5 item per halaman
+    const totalPages = Math.max(1, Math.ceil(itemsToShow.length / 5));
     page = Math.max(1, Math.min(page, totalPages));
     const startIndex = (page - 1) * 5;
     const pageItems = itemsToShow.slice(startIndex, startIndex + 5);
@@ -35,7 +32,7 @@ async function generateShopEmbed(interaction, user, category, page) {
                 cash: user.cash.toLocaleString(),
             })
         )
-        // .setTimestamp()
+
         .setFooter(await embedFooter(interaction, await t(interaction, 'economy_shop_footer', { page, totalPages })));
 
     if (pageItems.length === 0) {
@@ -124,20 +121,19 @@ async function generateActionRows(interaction, page, totalPages, category, pageI
     return [categoryRow, buyRow, navigationRow];
 }
 
-// --- COMMAND UTAMA ---
 module.exports = {
     subcommand: true,
     data: (subcommand) => subcommand.setName('shop').setDescription('🛒 Look and buy items from the shop.'),
 
     async execute(interaction, container) {
         await interaction.deferReply();
-        let user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        let user = await KythiaUser.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
         if (!user) {
             const embed = new EmbedBuilder()
                 .setColor(kythia.bot.color)
                 .setDescription(await t(interaction, 'economy_withdraw_no_account_desc'))
                 .setThumbnail(interaction.user.displayAvatarURL())
-                // .setTimestamp()
+
                 .setFooter(await embedFooter(interaction));
             return interaction.reply({ embeds: [embed], ephemeral: true });
         }
@@ -150,19 +146,18 @@ module.exports = {
 
         const message = await interaction.editReply({ embeds: [embed], components: components, fetchReply: true });
 
-        const collector = message.createMessageComponentCollector({ time: 300000 }); // 5 menit
+        const collector = message.createMessageComponentCollector({ time: 300000 });
 
         collector.on('collect', async (i) => {
             if (i.user.id !== interaction.user.id) {
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)
                     .setDescription(await t(i, 'economy_shop_not_your_interaction_desc'));
-                // .setTimestamp();
+
                 return i.reply({ embeds: [embed], ephemeral: true });
             }
             await i.deferUpdate();
 
-            // Handle select_category, buy_item, navigation
             if (i.customId === 'select_category') {
                 const selected = i.values[0];
                 currentCategory = selected.replace('shop_category_', '');
@@ -170,14 +165,13 @@ module.exports = {
             } else if (i.customId.startsWith('shop_nav_')) {
                 const parts = i.customId.split('_');
                 const navType = parts[2];
-                // category is always at the end
+
                 const navCategory = parts.slice(3).join('_');
                 if (navCategory) currentCategory = navCategory;
                 if (navType === 'next') currentPage++;
                 if (navType === 'prev') currentPage--;
                 if (navType === 'first') currentPage = 1;
                 if (navType === 'last') {
-                    // get totalPages for this category
                     const itemsToShow =
                         currentCategory === 'all'
                             ? allItems.filter((item) => item.buyable)
@@ -188,47 +182,42 @@ module.exports = {
                 const itemId = i.values[0];
                 const selectedItem = allItems.find((item) => item.id === itemId);
 
-                // --- PERBAIKAN DI SINI ---
-                // 1. Ambil nama item yang sudah diterjemahkan
                 const translatedItemName = await t(interaction, selectedItem.nameKey);
-                // 2. Gabungkan emoji dengan NAMA HASIL TERJEMAHAN
-                const itemNameWithEmoji = `${selectedItem.emoji} ${translatedItemName}`;
-                // --- SELESAI ---
 
-                user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+                const itemNameWithEmoji = `${selectedItem.emoji} ${translatedItemName}`;
+
+                user = await KythiaUser.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
 
                 if (!selectedItem) {
                     const embed = new EmbedBuilder()
                         .setColor(kythia.bot.color)
                         .setDescription(await t(i, 'economy_shop_item_not_found_desc'));
-                    // .setTimestamp();
+
                     return i.followUp({ embeds: [embed], ephemeral: true });
                 }
                 if (user.cash < selectedItem.price) {
                     const embed = new EmbedBuilder()
                         .setColor(kythia.bot.color)
                         .setDescription(await t(i, 'economy_shop_not_enough_money_desc', { item: itemNameWithEmoji }));
-                    // .setTimestamp();
+
                     return i.followUp({ embeds: [embed], ephemeral: true });
                 }
 
                 user.cash -= selectedItem.price;
                 await user.saveAndUpdateCache();
-                // Simpan ke inventory dengan nama yang sudah ada emojinya
+
                 await Inventory.create({ guildId: user.guildId, userId: user.userId, itemName: itemNameWithEmoji });
 
-                // Tampilkan pesan sukses dengan nama yang benar
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)
                     .setDescription(
                         await t(i, 'economy_shop_buy_success_desc', { item: itemNameWithEmoji, price: selectedItem.price.toLocaleString() })
                     );
-                // .setTimestamp();
+
                 await i.followUp({ embeds: [embed], ephemeral: true });
             }
 
-            // Re-generate and edit the message
-            user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id }); // Re-fetch user data
+            user = await KythiaUser.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
             const newShop = await generateShopEmbed(interaction, user, currentCategory, currentPage);
             const newComponents = await generateActionRows(
                 interaction,

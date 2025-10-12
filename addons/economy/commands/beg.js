@@ -41,8 +41,8 @@ module.exports = {
         }
 
         // Randomize beg amount between 10 and 50
-        const randomCash = Math.floor(Math.random() * 41) + 10;
-        user.kythiaCoin += randomCash;
+        const randomCoin = Math.floor(Math.random() * 41) + 10;
+        user.kythiaCoin += randomCoin;
         user.lastBeg = Date.now();
         user.changed('kythiaCoin', true);
         user.changed('lastBeg', true);
@@ -51,7 +51,7 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL())
-            .setDescription(await t(interaction, 'economy_beg_beg_success', { amount: randomCash }))
+            .setDescription(await t(interaction, 'economy_beg_beg_success', { amount: randomCoin }))
             // .setTimestamp()
             .setFooter(await embedFooter(interaction));
         return interaction.editReply({ embeds: [embed] });

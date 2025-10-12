@@ -15,9 +15,9 @@ module.exports = {
     data: (subcommand) =>
         subcommand
             .setName('give')
-            .setDescription('💰 Give cash to another user.')
-            .addUserOption((option) => option.setName('target').setDescription('User to give cash to').setRequired(true))
-            .addIntegerOption((option) => option.setName('amount').setDescription('Amount of cash to give').setRequired(true)),
+            .setDescription('💰 Give kythia coin to another user.')
+            .addUserOption((option) => option.setName('target').setDescription('User to give kythia coin to').setRequired(true))
+            .addIntegerOption((option) => option.setName('amount').setDescription('Amount of kythia coin to give').setRequired(true)),
     async execute(interaction) {
         await interaction.deferReply();
 

@@ -7,15 +7,15 @@
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { embedFooter } = require('@utils/discord');
-const User = require('@coreModels/User');
+const KythiaUser = require('@coreModels/KythiaUser');
 const { t } = require('@utils/translator');
 
 module.exports = {
     subcommand: true,
-    data: (subcommand) => subcommand.setName('bank').setDescription('💰 Check your bank balance.'),
+    data: (subcommand) => subcommand.setName('bank').setDescription('💰 Check your kythia bank balance.'),
     async execute(interaction) {
         await interaction.deferReply();
-        let user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
                 .setColor(kythia.bot.color)
@@ -32,10 +32,10 @@ module.exports = {
             .setDescription(
                 await t(interaction, 'economy_bank_bank_balance_desc', {
                     username: interaction.user.username,
-                    cash: user.cash,
-                    bank: user.bank,
+                    cash: user.kythiaCoin,
+                    bank: user.kythiaBank,
                     bankType: user.bankType,
-                    total: user.cash + user.bank,
+                    total: user.kythiaCoin + user.kythiaBank,
                 })
             )
             // .setTimestamp()

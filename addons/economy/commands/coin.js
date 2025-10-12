@@ -12,7 +12,7 @@ const { t } = require('@utils/translator');
 
 module.exports = {
     subcommand: true,
-    data: (subcommand) => subcommand.setName('cash').setDescription('💰 Check your cash balance.'),
+    data: (subcommand) => subcommand.setName('coin').setDescription('💰 Check your kythia coin balance.'),
     async execute(interaction) {
         await interaction.deferReply();
 
