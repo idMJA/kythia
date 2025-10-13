@@ -9,6 +9,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
+const BankManager = require('../../helpers/bankManager');
 module.exports = {
     subcommand: true,
     data: (subcommand) =>
@@ -18,21 +19,13 @@ module.exports = {
             .addStringOption((option) =>
                 option
                     .setName('bank')
-                    .setDescription('Choose a bank type')
+                    .setDescription('Each bank offers unique benefits for your playstyle!')
                     .setRequired(true)
                     .addChoices(
-                        { name: 'BCA', value: 'bca' },
-                        { name: 'BNI', value: 'bni' },
-                        { name: 'BRI', value: 'bri' },
-                        { name: 'Mandiri', value: 'mandiri' },
-                        { name: 'Danamon', value: 'danamon' },
-                        { name: 'Permata', value: 'permata' },
-                        { name: 'CIMB Niaga', value: 'cimbniaga' },
-                        { name: 'Maybank', value: 'maybank' },
-                        { name: 'HSBC', value: 'hsbc' },
-                        { name: 'DBS', value: 'dbs' },
-                        { name: 'OCBC', value: 'ocbc' },
-                        { name: 'UOB', value: 'uob' }
+                        ...BankManager.getAllBanks().map((bank) => ({
+                            name: `${bank.emoji} ${bank.name}`,
+                            value: bank.id,
+                        }))
                     )
             ),
     async execute(interaction) {
@@ -46,7 +39,6 @@ module.exports = {
                 .setColor(kythia.bot.color)
                 .setDescription(await t(interaction, 'economy_account_create_account_create_already_desc'))
                 .setThumbnail(interaction.user.displayAvatarURL())
-                // .setTimestamp()
                 .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
@@ -60,7 +52,6 @@ module.exports = {
                 await t(interaction, 'economy_account_create_account_create_success_desc', { bankType: bankType.toUpperCase() })
             )
             .setThumbnail(interaction.user.displayAvatarURL())
-            // .setTimestamp()
             .setFooter(await embedFooter(interaction));
         return interaction.editReply({ embeds: [embed] });
     },

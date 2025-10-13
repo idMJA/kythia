@@ -11,6 +11,7 @@ const KythiaUser = require('@coreModels/KythiaUser');
 const Inventory = require('@coreModels/Inventory');
 const { checkCooldown } = require('@utils/time');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -69,18 +70,30 @@ module.exports = {
             poison = await Inventory.findOne({ where: { userId: target.userId, itemName: '🧪 Poison' } });
         }
 
-        // Randomize the success chance
+        // ==== EDITED LOGIC FOR BANK INFLUENCE ON SUCCESS CHANCE ====
+        const userBank = BankManager.getBank(user.bankType);
         let success = false;
         if (guard) {
             success = false;
             await guard.destroy(); // Destroy the guard item after use
         } else if (poison) {
-            success = Math.random() < 0.1; // 10% chance of success
+            // Poison always remains 10%
+            success = Math.random() < 0.1;
         } else {
-            success = Math.random() < 0.3; // 30% chance of success
+            // Use base + bank success chance for normal rob attempt
+            let baseSuccessChance = 0.3; // 30%
+            // Tambahkan bonus dari bank
+            const successBonus = userBank.robSuccessBonusPercent / 100; // misal 15% jadi 0.15
+            baseSuccessChance += successBonus;
+            success = Math.random() < baseSuccessChance;
         }
+        // ==== END OF EDITED LOGIC ====
 
-        const robAmount = Math.floor(Math.random() * 201) + 50;
+        const baseRobAmount = Math.floor(Math.random() * 201) + 50;
+        // Apply bank rob success bonus
+        const robSuccessBonusPercent = userBank.robSuccessBonusPercent;
+        const robBonus = Math.floor(baseRobAmount * (robSuccessBonusPercent / 100));
+        const robAmount = baseRobAmount + robBonus;
 
         if (success) {
             // Successful rob
@@ -125,8 +138,11 @@ module.exports = {
                 .setFooter(await embedFooter(interaction));
             await targetUser.send({ embeds: [embedToTarget] });
         } else {
-            // Failed rob, pay the target
-            if (user.kythiaCoin < robAmount) {
+            // Failed rob, pay the target with penalty multiplier
+            const robPenaltyMultiplier = userBank ? userBank.robPenaltyMultiplier : 1;
+            const basePenalty = Math.floor(robAmount * robPenaltyMultiplier);
+
+            if (user.kythiaCoin < basePenalty && !poison) {
                 const embed = new EmbedBuilder()
                     .setColor('Red')
                     .setDescription(await t(interaction, 'economy_rob_rob_user_not_enough_money_fail'))
@@ -134,15 +150,15 @@ module.exports = {
                     .setFooter(await embedFooter(interaction));
                 return interaction.editReply({ embeds: [embed] });
             }
-            let penalty = robAmount;
+            let penalty = basePenalty;
             if (poison) {
                 penalty = user.kythiaCoin;
                 user.kythiaCoin -= penalty;
                 target.kythiaCoin += penalty;
                 await poison.destroy(); // Destroy poison item after use
             } else {
-                user.kythiaCoin -= robAmount;
-                target.kythiaCoin += robAmount;
+                user.kythiaCoin -= basePenalty;
+                target.kythiaCoin += basePenalty;
             }
 
             user.lastRob = new Date();

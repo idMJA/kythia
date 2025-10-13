@@ -9,6 +9,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -33,7 +34,13 @@ module.exports = {
                 return interaction.editReply({ embeds: [embed] });
             }
 
-            if (user.kythiaBank < amount) {
+            // Calculate withdraw fee based on user's bank type
+            const userBank = BankManager.getBank(user.bankType);
+            const withdrawFeePercent = userBank.withdrawFeePercent;
+            const fee = Math.floor(amount * (withdrawFeePercent / 100));
+            const totalRequired = amount + fee;
+
+            if (user.kythiaBank < totalRequired) {
                 const embed = new EmbedBuilder()
                     .setColor('Red')
                     .setDescription(await t(interaction, 'economy_withdraw_withdraw_not_enough_bank'))
@@ -43,7 +50,7 @@ module.exports = {
                 return interaction.editReply({ embeds: [embed] });
             }
 
-            user.kythiaBank -= amount;
+            user.kythiaBank -= totalRequired;
             user.kythiaCoin += amount;
             user.changed('kythiaBank', true);
             user.changed('kythiaCoin', true);

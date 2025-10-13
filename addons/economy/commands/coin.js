@@ -32,7 +32,7 @@ module.exports = {
             .setDescription(
                 await t(interaction, 'economy_cash_cash_balance', {
                     username: interaction.user.username,
-                    cash: user.kythiaCoin,
+                    cash: user.kythiaCoin.toLocaleString(),
                 })
             )
             .setFooter(await embedFooter(interaction));

@@ -5,7 +5,7 @@
  * @assistant chaa & graa
  * @version 0.9.9-beta-rc.1
  */
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
@@ -71,25 +71,91 @@ module.exports = {
             return interaction.editReply({ embeds: [embed] });
         }
 
-        // Update balances
-        giver.kythiaCoin -= amount;
-        receiver.kythiaCoin += amount;
-
-        giver.changed('kythiaCoin', true);
-        receiver.changed('kythiaCoin', true);
-        await giver.saveAndUpdateCache('userId');
-        await receiver.saveAndUpdateCache('userId');
-
-        const embed = new EmbedBuilder()
+        // Confirmation Embed & Buttons (like transfer.js)
+        const confirmEmbed = new EmbedBuilder()
             .setColor(kythia.bot.color)
+            .setThumbnail(interaction.user.displayAvatarURL())
             .setDescription(
-                await t(interaction, 'economy_give_give_success', {
+                await t(interaction, 'economy_give_give_confirm', {
                     amount,
                     target: target.username,
                 })
             )
-            .setThumbnail(interaction.user.displayAvatarURL())
             .setFooter(await embedFooter(interaction));
-        return interaction.editReply({ embeds: [embed] });
+
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId('confirm')
+                .setLabel(await t(interaction, 'economy_give_give_btn_confirm'))
+                .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId('cancel')
+                .setLabel(await t(interaction, 'economy_give_give_btn_cancel'))
+                .setStyle(ButtonStyle.Danger)
+        );
+
+        await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+
+        const filter = (i) => i.user.id === interaction.user.id;
+        const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+
+        collector.on('collect', async (i) => {
+            if (i.customId === 'confirm') {
+                // Update balances
+                giver.kythiaCoin -= amount;
+                receiver.kythiaCoin += amount;
+
+                giver.changed('kythiaCoin', true);
+                receiver.changed('kythiaCoin', true);
+                await giver.saveAndUpdateCache('userId');
+                await receiver.saveAndUpdateCache('userId');
+
+                const successEmbed = new EmbedBuilder()
+                    .setColor(kythia.bot.color)
+                    .setDescription(
+                        await t(interaction, 'economy_give_give_success', {
+                            amount,
+                            target: target.username,
+                        })
+                    )
+                    .setThumbnail(interaction.user.displayAvatarURL())
+                    .setFooter(await embedFooter(interaction));
+                await i.update({ embeds: [successEmbed], components: [] });
+
+                // DM the receiver about the gift (optional, but like transfer.js DM the receiver)
+                const receiverEmbed = new EmbedBuilder()
+                    .setColor(kythia.bot.color)
+                    .setDescription(
+                        await t(interaction, 'economy_give_give_received', {
+                            amount,
+                            from: interaction.user.username,
+                        })
+                    )
+                    .setThumbnail(interaction.user.displayAvatarURL())
+                    .setFooter(await embedFooter(interaction));
+                try {
+                    const member = await interaction.client.users.fetch(target.id);
+                    await member.send({ embeds: [receiverEmbed] });
+                } catch (e) {
+                    // ignore DM errors
+                }
+            } else if (i.customId === 'cancel') {
+                const cancelEmbed = new EmbedBuilder()
+                    .setColor(kythia.bot.color)
+                    .setDescription(await t(interaction, 'economy_give_give_cancelled'))
+                    .setFooter(await embedFooter(interaction));
+                await i.update({ embeds: [cancelEmbed], components: [] });
+            }
+        });
+
+        collector.on('end', async (collected) => {
+            if (collected.size === 0) {
+                const timeoutEmbed = new EmbedBuilder()
+                    .setColor(kythia.bot.color)
+                    .setDescription(await t(interaction, 'economy_give_give_timeout'))
+                    .setFooter(await embedFooter(interaction));
+                await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
+            }
+        });
     },
 };

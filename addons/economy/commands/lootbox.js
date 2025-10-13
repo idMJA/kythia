@@ -11,6 +11,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const ServerSetting = require('@coreModels/ServerSetting');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -39,8 +40,15 @@ module.exports = {
         }
 
         // Randomize lootbox reward between 100 and 500
-        const randomReward = Math.floor(Math.random() * 401) + 100;
-        user.kythiaCoin += randomReward;
+        const baseReward = Math.floor(Math.random() * 401) + 100;
+        
+        // Apply bank income bonus
+        const userBank = BankManager.getBank(user.bankType);
+        const incomeBonusPercent = userBank.incomeBonusPercent;
+        const bankBonus = Math.floor(baseReward * (incomeBonusPercent / 100));
+        const randomReward = baseReward + bankBonus;
+        
+        user.kythiaCoin += randomReward; 
         user.lastLootbox = Date.now();
         user.changed('kythiaCoin', true);
         user.changed('lastLootbox', true);

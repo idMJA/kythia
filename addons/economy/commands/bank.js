@@ -31,10 +31,10 @@ module.exports = {
             .setDescription(
                 await t(interaction, 'economy_bank_bank_balance_desc', {
                     username: interaction.user.username,
-                    cash: user.kythiaCoin,
-                    bank: user.kythiaBank,
+                    cash: user.kythiaCoin.toLocaleString(),
+                    bank: user.kythiaBank.toLocaleString(),
                     bankType: user.bankType,
-                    total: user.kythiaCoin + user.kythiaBank,
+                    total: (user.kythiaCoin + user.kythiaBank).toLocaleString(),
                 })
             )
             .setFooter(await embedFooter(interaction));

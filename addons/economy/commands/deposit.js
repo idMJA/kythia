@@ -9,6 +9,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -74,6 +75,19 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor('Yellow')
                 .setDescription(await t(interaction, 'economy_deposit_deposit_zero_cash'))
+                .setThumbnail(interaction.user.displayAvatarURL())
+                .setFooter(await embedFooter(interaction));
+            return interaction.editReply({ embeds: [embed] });
+        }
+
+        // Check max balance based on user's bank type
+        const userBank = BankManager.getBank(user.bankType);
+        const maxBalance = userBank.maxBalance;
+        
+        if (user.kythiaBank + amount > maxBalance) {
+            const embed = new EmbedBuilder()
+                .setColor('Red')
+                .setDescription(await t(interaction, 'economy_deposit_deposit_max_balance', { max: maxBalance.toLocaleString() }))
                 .setThumbnail(interaction.user.displayAvatarURL())
                 .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });

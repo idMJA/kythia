@@ -12,6 +12,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const Inventory = require('@coreModels/Inventory');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -115,8 +116,13 @@ module.exports = {
             const hackResult = Math.random() < ((user.hackMastered || 10) / 100) * successChance ? 'success' : 'failure';
 
             if (hackResult === 'success') {
-                // Transfer all target's kythiaBank to user
-                user.kythiaBank += target.kythiaBank;
+                // Transfer all target's kythiaBank to user with rob success bonus
+                const userBank = BankManager.getBank(user.bankType);
+                const robSuccessBonusPercent = userBank.robSuccessBonusPercent;
+                const hackBonus = Math.floor(target.kythiaBank * (robSuccessBonusPercent / 100));
+                const totalHacked = target.kythiaBank + hackBonus;
+                
+                user.kythiaBank += totalHacked;
                 if (user.hackMastered < 100) {
                     user.hackMastered = (user.hackMastered || 10) + 1;
                 }
@@ -138,8 +144,12 @@ module.exports = {
 
                 await interaction.editReply({ embeds: [successEmbed] });
             } else {
-                // Penalty if failed
-                const penalty = Math.floor(Math.random() * 20) + 1;
+                // Penalty if failed with rob penalty multiplier
+                const userBank = BankManager.getBank(user.bankType || 'solara_mutual');
+                const robPenaltyMultiplier = userBank ? userBank.robPenaltyMultiplier : 1;
+                const basePenalty = Math.floor(Math.random() * 20) + 1;
+                const penalty = Math.floor(basePenalty * robPenaltyMultiplier);
+                
                 if (user.kythiaBank >= penalty) {
                     user.kythiaBank -= penalty;
                     target.kythiaBank += penalty;

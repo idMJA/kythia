@@ -9,6 +9,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -64,10 +65,10 @@ module.exports = {
                     .setFooter(await embedFooter(interaction));
                 return interaction.editReply({ embeds: [embed] });
             }
-            let fee = 0;
-            if (giver.bankType !== receiver.bankType) {
-                fee = Math.floor(amount * 0.05);
-            }
+            // Calculate transfer fee based on giver's bank type
+            const giverBank = BankManager.getBank(giver.bankType);
+            const transferFeePercent = giverBank.transferFeePercent;
+            const fee = Math.floor(amount * (transferFeePercent / 100));
             if (giver.kythiaBank < amount + fee) {
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)

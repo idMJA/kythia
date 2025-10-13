@@ -6,12 +6,13 @@
  * @version 0.9.9-beta-rc.1
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const BankManager = require('../helpers/bankManager');
+const KythiaUser = require('@coreModels/KythiaUser');
+const Inventory = require('@coreModels/Inventory');
 const { embedFooter } = require('@utils/discord');
 const { checkCooldown } = require('@utils/time');
-const Inventory = require('@coreModels/Inventory');
-const KythiaUser = require('@coreModels/KythiaUser');
-const jobs = require('../helpers/jobs');
 const { t } = require('@utils/translator');
+const jobs = require('../helpers/jobs');
 
 module.exports = {
     subcommand: true,
@@ -90,7 +91,13 @@ module.exports = {
 
         const baseEarning = Math.floor(Math.random() * (job.basePay[1] - job.basePay[0] + 1)) + job.basePay[0];
         const careerBonus = Math.floor(baseEarning * (user.careerLevel || 0) * 0.05);
-        const finalEarning = Math.floor(baseEarning * scenario.modifier) + careerBonus;
+        
+        // Apply bank income bonus
+        const userBank = BankManager.getBank(user.bankType);
+        const incomeBonusPercent = userBank.incomeBonusPercent;
+        const bankBonus = Math.floor(baseEarning * (incomeBonusPercent / 100));
+        
+        const finalEarning = Math.floor(baseEarning * scenario.modifier) + careerBonus + bankBonus;
 
         user.kythiaCoin += finalEarning;
         user.lastWork = new Date();

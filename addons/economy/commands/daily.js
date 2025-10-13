@@ -10,6 +10,7 @@ const KythiaUser = require('@coreModels/KythiaUser');
 const { embedFooter } = require('@utils/discord');
 const { checkCooldown } = require('@utils/time');
 const { t } = require('@utils/translator');
+const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
@@ -38,7 +39,14 @@ module.exports = {
         }
 
         // Randomize the daily coin reward between 50 and 150
-        const randomCoin = Math.floor(Math.random() * 101) + 50;
+        const baseCoin = Math.floor(Math.random() * 101) + 50;
+        
+        // Apply bank income bonus
+        const userBank = BankManager.getBank(user.bankType);
+        const incomeBonusPercent = userBank.incomeBonusPercent;
+        const bankBonus = Math.floor(baseCoin * (incomeBonusPercent / 100));
+        const randomCoin = baseCoin + bankBonus;
+        
         user.kythiaCoin += randomCoin;
         user.lastDaily = Date.now();
         user.changed('kythiaCoin', true);

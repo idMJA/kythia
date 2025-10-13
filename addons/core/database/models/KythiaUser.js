@@ -26,7 +26,7 @@ class KythiaUser extends KythiaModel {
                 kythiaRuby: { type: DataTypes.BIGINT, defaultValue: 0 },
                 
                 kythiaBank: { type: DataTypes.BIGINT, defaultValue: 0 },
-                bankType: { type: DataTypes.STRING, defaultValue: 'bca' },
+                bankType: { type: DataTypes.STRING, defaultValue: 'solara_mutual' },
                 hackMastered: { type: DataTypes.INTEGER, defaultValue: 10, max: 100 },
                 careerMastered: { type: DataTypes.INTEGER, defaultValue: 1, max: 10 },
                 lastDaily: { type: DataTypes.DATE, defaultValue: null },
