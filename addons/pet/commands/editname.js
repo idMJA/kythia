@@ -9,6 +9,7 @@ const { EmbedBuilder } = require('discord.js');
 const { UserPet, Pet } = require('../database/models');
 const { t } = require('@utils/translator');
 const User = require('@coreModels/User');
+const { embedFooter } = require('@utils/discord');
 
 module.exports = {
     subcommand: true,
@@ -21,7 +22,6 @@ module.exports = {
         await interaction.deferReply();
 
         const userId = interaction.user.id;
-        const user = await User.getCache({ userId, guildId: interaction.guild.id });
         const userPet = await UserPet.getCache({ userId: userId, include: [{ model: Pet, as: 'pet' }] });
         const newName = interaction.options.getString('name');
         userPet.petName = newName;
@@ -38,7 +38,7 @@ module.exports = {
             )
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: await t(interaction, 'pet_editname_footer', { petName: userPet.petName }) })
+            .setFooter(await embedFooter(interaction))
             .setTimestamp();
         return await interaction.editReply({ embeds: [embed] });
     },

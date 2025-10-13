@@ -5,8 +5,9 @@
  * @assistant chaa & graa
  * @version 0.9.9-beta-rc.1
  */
-const { EmbedBuilder } = require('discord.js');
 const { UserPet, Pet } = require('../database/models');
+const { embedFooter } = require('@utils/discord');
+const { EmbedBuilder } = require('discord.js');
 const { t } = require('@utils/translator');
 const User = require('@coreModels/User');
 
@@ -55,10 +56,7 @@ module.exports = {
             )
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({
-                text: await t(interaction, 'pet_leaderboard_footer'),
-                iconURL: interaction.client.user.displayAvatarURL({ dynamic: true }),
-            })
+            .setFooter(await embedFooter(interaction))
             .setTimestamp();
 
         return interaction.editReply({ embeds: [embed] });

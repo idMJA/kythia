@@ -6,6 +6,8 @@
  * @version 0.9.9-beta-rc.1
  */
 
+const UserPet = require("../database/models/UserPet");
+
 async function updatePetStatus(pet) {
     const now = Date.now();
     const lastUpdated = pet.lastUpdatedAt ? pet.lastUpdatedAt.getTime() : now;
@@ -18,7 +20,7 @@ async function updatePetStatus(pet) {
     if (pet.hunger <= 0 && pet.happiness <= 0 && !pet.isDead) {
         pet.isDead = true;
 
-        const user = await User.findOne({ where: { userId: pet.userId, isDead: false } });
+        const user = await UserPet.findOne({ where: { userId: pet.userId, isDead: false } });
 
         if (user) {
             const embed = new EmbedBuilder()

@@ -7,6 +7,7 @@
  */
 const { EmbedBuilder } = require('discord.js');
 const { UserPet, Pet } = require('../database/models');
+const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
 
 module.exports = {
@@ -21,13 +22,15 @@ module.exports = {
         if (!userPet) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_play_no_pet_title')}\n${await t(interaction, 'pet_play_no_pet')}`)
-                .setColor(0xed4245);
+                .setColor(kythia.bot.color)
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
         if (userPet.isDead) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_play_dead_title')}\n${await t(interaction, 'pet_play_dead')}`)
-                .setColor(0xed4245);
+                .setColor(kythia.bot.color)
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
         // Update happiness level
@@ -46,7 +49,7 @@ module.exports = {
             )
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: await t(interaction, 'pet_play_footer', { happiness: userPet.happiness }) });
+            .setFooter(await embedFooter(interaction));
 
         return interaction.editReply({ embeds: [embed] });
     },

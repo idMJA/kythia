@@ -9,6 +9,7 @@ const { EmbedBuilder } = require('discord.js');
 const { UserPet, Pet } = require('../database/models');
 const Inventory = require('@coreModels/Inventory');
 const { t } = require('@utils/translator');
+const { embedFooter } = require('@utils/discord');
 
 module.exports = {
     subcommand: true,
@@ -63,7 +64,7 @@ module.exports = {
             )
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: await t(interaction, 'pet_feed_footer', { hunger: userPet.hunger }) });
+            .setFooter(await embedFooter(interaction));
 
         return interaction.editReply({ embeds: [embed] });
     },

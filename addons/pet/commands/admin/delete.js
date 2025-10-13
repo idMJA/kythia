@@ -6,6 +6,7 @@
  * @version 0.9.9-beta-rc.1
  */
 const { EmbedBuilder } = require('discord.js');
+const { embedFooter } = require('@src/utils/discord');
 const { Pet } = require('../../database/models');
 const { t } = require('@utils/translator');
 
@@ -27,12 +28,14 @@ module.exports = {
                 .setDescription(
                     `## ${await t(interaction, 'pet_admin_delete_delete_success_title')}\n${await t(interaction, 'pet_admin_delete_delete_success', { name })}`
                 )
-                .setColor(0x57f287);
+                .setColor(kythia.bot.color)
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         } else {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_admin_delete_delete_notfound_title')}\n${await t(interaction, 'pet_admin_delete_delete_notfound')}`)
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
     },

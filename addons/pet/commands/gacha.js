@@ -21,24 +21,23 @@ module.exports = {
 
         const userId = interaction.user.id;
         const guildId = interaction.guild.id;
-        const setting = await ServerSetting.getCache({ guildId: guildId });
-        const user = await User.getCache({ userId, guildId: interaction.guild.id });
         const userPet = await UserPet.getCache({ userId: userId, include: [{ model: Pet, as: 'pet' }] });
 
         if (!userPet) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_gacha_no_pet_title')}\n${await t(interaction, 'pet_gacha_no_pet')}`)
-                .setColor(0xed4245);
+                .setColor(kythia.bot.color);
             return interaction.editReply({ embeds: [embed] });
         }
 
-        const cooldown = checkCooldown(userPet.lastGacha, setting.petGachaCooldown);
+        const cooldown = checkCooldown(userPet.lastGacha, kythia.addons.pet.gachaCooldown || 86400); // Default to 24 hours
         if (cooldown.remaining) {
             const embed = new EmbedBuilder()
                 .setDescription(
                     `## ${await t(interaction, 'pet_gacha_cooldown_title')}\n${await t(interaction, 'pet_gacha_cooldown', { time: cooldown.time })}`
                 )
-                .setColor(0xed4245);
+                .setColor(kythia.bot.color)
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -82,7 +81,7 @@ module.exports = {
             )
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: await t(interaction, 'pet_gacha_footer', { level: newLevel }) });
+            .setFooter(await embedFooter(interaction));
 
         return await interaction.editReply({ embeds: [embed] });
 

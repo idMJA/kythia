@@ -7,6 +7,7 @@
  */
 const { EmbedBuilder } = require('discord.js');
 const { UserPet, Pet } = require('../database/models');
+const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
 const User = require('@coreModels/User');
 
@@ -22,7 +23,8 @@ module.exports = {
         if (!userPet) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_sell_no_pet_title')}\n${await t(interaction, 'pet_sell_no_pet')}`)
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
         const rarity = userPet.pet.rarity;
@@ -42,7 +44,8 @@ module.exports = {
             .setDescription(
                 `## ${await t(interaction, 'pet_sell_success_title')}\n${await t(interaction, 'pet_sell_success', { value: petValue })}`
             )
-            .setColor(0x57f287);
+            .setColor(kythia.bot.color)
+            .setFooter(await embedFooter(interaction));
         return interaction.editReply({ embeds: [embed] });
     },
 };

@@ -124,7 +124,7 @@ module.exports = {
 
     async execute(interaction, container) {
         await interaction.deferReply();
-        let user = await KythiaUser.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
                 .setColor(kythia.bot.color)
@@ -183,7 +183,7 @@ module.exports = {
 
                 const itemNameWithEmoji = `${selectedItem.emoji} ${translatedItemName}`;
 
-                user = await KythiaUser.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+                user = await KythiaUser.getCache({ userId: interaction.user.id });
 
                 if (!selectedItem) {
                     const embed = new EmbedBuilder()
@@ -203,7 +203,7 @@ module.exports = {
                 user.cash -= selectedItem.price;
                 await user.saveAndUpdateCache();
 
-                await Inventory.create({ guildId: user.guildId, userId: user.userId, itemName: itemNameWithEmoji });
+                await Inventory.create({ userId: user.userId, itemName: itemNameWithEmoji });
 
                 const embed = new EmbedBuilder()
                     .setColor(kythia.bot.color)
@@ -214,7 +214,7 @@ module.exports = {
                 await i.followUp({ embeds: [embed], ephemeral: true });
             }
 
-            user = await KythiaUser.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+            user = await KythiaUser.getCache({ userId: interaction.user.id });
             const newShop = await generateShopEmbed(interaction, user, currentCategory, currentPage);
             const newComponents = await generateActionRows(
                 interaction,

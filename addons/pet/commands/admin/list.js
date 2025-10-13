@@ -7,6 +7,7 @@
  */
 const { EmbedBuilder } = require('discord.js');
 const { Pet } = require('../../database/models');
+const { embedFooter } = require('@utils/discord');
 const { t } = require('@utils/translator');
 
 module.exports = {
@@ -20,7 +21,8 @@ module.exports = {
         if (!pets.length) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_admin_list_list_empty_title')}\n${await t(interaction, 'pet_admin_list_list_empty')}`)
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
 

@@ -1038,6 +1038,15 @@
     "economy_shop_category_utility": "Utility",
     "economy_shop_category_robbing": "Robbing",
     "economy_shop_category_pet": "Pet",
+    "economy_leaderboard_title": "## 🏆 Global Economy Leaderboard\n**Page {page} of {totalPages}**",
+    "economy_leaderboard_empty": "No users found in the economy system yet.",
+    "economy_leaderboard_entry": "{medal} **{username}**\n💰 Total Wealth: **🪙 {wealth}**\n💵 Cash: **🪙 {coin}** | 🏦 Bank: **🪙 {bank}**",
+    "economy_leaderboard_footer": "Total Users: {totalUsers}",
+    "economy_leaderboard_nav_first": "⏪ First",
+    "economy_leaderboard_nav_prev": "◀️ Back",
+    "economy_leaderboard_nav_next": "Next ▶️",
+    "economy_leaderboard_nav_last": "Last ⏩",
+    "economy_leaderboard_not_your_interaction": "You cannot use this interaction!",
     "shop": {
         "items": {
             "laptop_tech": {

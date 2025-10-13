@@ -8,6 +8,7 @@
 const { EmbedBuilder } = require('discord.js');
 const ServerSetting = require('@coreModels/ServerSetting');
 const { UserPet, Pet } = require('../database/models');
+const { embedFooter } = require('@utils/discord');
 const { checkCooldown } = require('@utils/time');
 const { t } = require('@utils/translator');
 const User = require('@coreModels/User');
@@ -27,22 +28,25 @@ module.exports = {
         if (!userPet) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_use_no_pet_title')}\n${await t(interaction, 'pet_use_no_pet')}`)
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
-        const cooldown = checkCooldown(userPet.lastUse, setting.petCooldown);
+        const cooldown = checkCooldown(userPet.lastUse, kythia.addons.pet.useCooldown || 14400); // 4 hours
         if (cooldown.remaining) {
             const embed = new EmbedBuilder()
                 .setDescription(
                     `## ${await t(interaction, 'pet_use_cooldown_title')}\n${await t(interaction, 'pet_use_cooldown', { time: cooldown.time })}`
                 )
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
         if (userPet.isDead) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_use_dead_title')}\n${await t(interaction, 'pet_use_dead')}`)
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
         userPet.level += 1;
@@ -78,7 +82,7 @@ module.exports = {
             )
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: await t(interaction, 'pet_use_footer', { level: userPet.level }) });
+            .setFooter(await embedFooter(interaction));
 
         return interaction.editReply({ embeds: [embed] });
     },

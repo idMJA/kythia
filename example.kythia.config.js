@@ -178,6 +178,16 @@ function loadKythiaConfig() {
                 active: true,
                 exchangerateApi: process.env.EXCHANGERATE_API,
             },
+            economy: {
+                active: true,
+                // economy cooldown in second
+                dailyCooldown: 86400, // 1 day
+                begCooldown: 3600, // 1 hour
+                lootboxCooldown: 14400, // 4 hours
+                workCooldown: 28800, // 8 hours
+                robCooldown: 7200, // 2 hours
+                hackCooldown: 3600, // 1 hour
+            },
             /** -------------------------------------------------------------------
              * DASHBOARD ADDON
              * ------------------------------------------------------------------- */
@@ -232,8 +242,8 @@ function loadKythiaConfig() {
                  * required lavalink client, you can get it at: https://github.com/freyacodes/Lavalink
                  * use lavalink version 4.1.1
                  * with plugin:
-                 * - lavasrc-plugin-4.8.0
-                 * - youtube-plugin-1.13.5
+                 * - lavasrc-plugin-4.8.1
+                 * - youtube-plugin-1.15.0 (with yt-cipher)
                  * - lavasearch-plugin-1.0.0
                  * - sponsorblock-plugin-3.0.1
                  */
@@ -269,6 +279,8 @@ function loadKythiaConfig() {
             },
             pet: {
                 active: true,
+                useCooldown: 28800, // 8 hours
+                gachaCooldown: 3600, // 1 hours
             },
             pterodactyl: {
                 active: true,

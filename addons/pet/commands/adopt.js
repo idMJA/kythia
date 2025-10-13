@@ -8,6 +8,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { UserPet, Pet } = require('../database/models');
 const { t } = require('@utils/translator');
+const { embedFooter } = require('@utils/discord');
 
 module.exports = {
     subcommand: true,
@@ -24,7 +25,8 @@ module.exports = {
         if (existingPet) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_adopt_already_title')}\n${await t(interaction, 'pet_adopt_already')}`)
-                .setColor(0xed4245);
+                .setColor("Red")
+                .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
 

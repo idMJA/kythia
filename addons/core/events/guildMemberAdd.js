@@ -15,7 +15,7 @@ const { EmbedBuilder } = require('discord.js');
 const { rolePrefix } = require('../helpers');
 
 module.exports = async (bot, member) => {
-    let user = await User.findOne({ where: { userId: member.user.id } });
+    let user = await User.findOne({ where: { userId: member.user.id, guildId: member.guild.id } });
     if (!user) {
         user = await User.create({ userId: member.user.id, guildId: member.guild.id });
     }
