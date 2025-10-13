@@ -1,3 +1,11 @@
+/**
+ * @namespace: addons/economy/helpers/bankManager.js
+ * @type: Helper Script
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
+ */
+
 const BANKS = {
     apex_financial: {
         id: 'apex_financial',

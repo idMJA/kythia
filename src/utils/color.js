@@ -13,7 +13,7 @@
  * convertColor('Red', { from: 'discord', to: 'rgb' })   // -> { r: 237, g: 66, b: 69 }
  *
  * @copyright © 2025 kenndeclouv
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 const discordColors = {
     Default: 0x000000,

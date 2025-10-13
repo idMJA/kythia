@@ -1,3 +1,11 @@
+/**
+ * @namespace: addons/economy/database/models/MarketPortfolio.js
+ * @type: Database Model
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
+ */
+
 const { DataTypes } = require('sequelize');
 const sequelize = require('@src/database/KythiaSequelize');
 const KythiaModel = require('@src/database/KythiaModel');

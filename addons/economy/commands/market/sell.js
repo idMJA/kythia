@@ -1,7 +1,9 @@
 /**
  * @namespace: addons/economy/commands/market/sell.js
  * @type: Command
- * @description Memungkinkan user untuk menjual aset ke pasar global.
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');

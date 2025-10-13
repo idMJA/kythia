@@ -1,3 +1,11 @@
+/**
+ * @namespace: addons/dashboard/web/helpers/index.js
+ * @type: Helper Script
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
+ */
+
 const { ApplicationCommandOptionType, ApplicationCommandType, PermissionsBitField } = require('discord.js');
 const ServerSetting = require('@coreModels/ServerSetting');
 const KythiaVoter = require('@coreModels/KythiaVoter');

@@ -5,7 +5,7 @@
  * by reading their source files. It extracts not only the structure (name, options) but
  * also critical metadata like permissions, cooldowns, and usage examples.
  *
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 
 require('dotenv').config();

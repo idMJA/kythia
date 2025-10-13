@@ -1,9 +1,9 @@
 /**
- * @namespace: addons/core/system/automod.js
- * @type: Module
+ * @namespace: addons/core/helpers/automod.js
+ * @type: Helper Script
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 
 const { Collection, PermissionsBitField } = require('discord.js');

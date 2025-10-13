@@ -1,3 +1,11 @@
+/**
+ * @namespace: addons/economy/commands/market/portfolio.js
+ * @type: Command
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
+ */
+
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const MarketPortfolio = require('../../database/models/MarketPortfolio');
 const { getMarketData } = require('../../helpers/market');

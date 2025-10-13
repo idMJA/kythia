@@ -1,9 +1,9 @@
 /**
- * @namespace: addons/economy/commands/cash.js
+ * @namespace: addons/economy/commands/coin.js
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const KythiaUser = require('@coreModels/KythiaUser');

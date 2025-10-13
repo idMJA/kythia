@@ -3,7 +3,7 @@
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 const { SlashCommandBuilder, EmbedBuilder, ApplicationCommandType, ContextMenuCommandBuilder } = require('discord.js');
 const { t } = require('@utils/translator');

@@ -1,9 +1,9 @@
 /**
- * @namespace: addons/fun/commands/guessnumber.js
+ * @namespace: addons/fun/commands/_guessnumber.js
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { embedFooter } = require('@utils/discord');

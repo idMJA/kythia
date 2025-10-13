@@ -4,7 +4,7 @@
  * @file src/database/seed.js
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  *
  * @description
  * Utility to run database seed files by name, searching both core and all addons.

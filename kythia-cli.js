@@ -6,7 +6,7 @@
  * @file kythia-cli.js
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  *
  * @description
  * Your personal command-line assistant for managing the Kythia project.
@@ -315,7 +315,7 @@ y.command(
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 0.9.9-beta-rc.1
+ * @version 0.9.9-beta-rc.3
  */
 const { SlashCommandBuilder } = require('discord.js');
 const { t } = require('@utils/translator');

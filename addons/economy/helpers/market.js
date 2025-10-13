@@ -1,3 +1,11 @@
+/**
+ * @namespace: addons/economy/helpers/market.js
+ * @type: Helper Script
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
+ */
+
 const axios = require('axios');
 
 let marketCache = {

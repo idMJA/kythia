@@ -1,3 +1,11 @@
+/**
+ * @namespace: addons/streak/helpers/index.js
+ * @type: Helper Script
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.9-beta-rc.3
+ */
+
 const Streak = require('../database/models/Streak');
 
 async function getOrCreateStreak(userId, guildId) {
