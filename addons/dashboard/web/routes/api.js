@@ -7,12 +7,13 @@
  */
 
 const router = require('express').Router();
-const { ChannelType, MessageFlags } = require('discord.js');
-const client = require('@src/KythiaClient');
+const { ChannelType, MessageFlags, EmbedBuilder } = require('discord.js');
 const parseDiscordMarkdown = require('../helpers/parser');
 const KythiaVoter = require('@coreModels/KythiaVoter');
+const KythiaUser = require('@coreModels/KythiaUser');
 const convertColor = require('@src/utils/color');
 const logger = require('@src/utils/logger');
+const client = require('@src/KythiaClient');
 
 router.get('/api/guilds/:guildId/channels', async (req, res) => {
     try {
@@ -132,6 +133,47 @@ router.post('/api/topgg-webhook', async (req, res) => {
             });
         }
 
+        let voterUser = await KythiaUser.getCache({ userId });
+        let dmEmbed;
+
+        if (!voterUser) {
+            // User has no account: DM embed suggesting to create account with /eco account create
+            dmEmbed = new EmbedBuilder()
+                .setColor(kythia.bot.color)
+                .setTitle('👤 Create Your Kythia Account')
+                .setDescription(
+                    `You just voted for **${kythia.bot.name}** on Top.gg, thank you!\n\n` +
+                    `To receive your **1,000 Kythia Coin** reward, please create an account on the bot first:\n\n` +
+                    `> Use the command \`/eco account create\` on Discord.`
+                )
+                .setThumbnail(client.user.displayAvatarURL())
+                .setFooter({ text: `© ${kythia.bot.name} by ${kythia.owner.names}` });
+        } else {
+            // Give 1000 coins and save+cache (with change marking)
+            voterUser.kythiaCoin = (voterUser.kythiaCoin || 0) + 1000;
+            await voterUser.saveAndUpdateCache();
+            // Normal DM reward embed
+            dmEmbed = new EmbedBuilder()
+                .setColor(kythia.bot.color)
+                .setDescription(
+                    `## 🩷 Thanks for voting\n You just voted for **${kythia.bot.name}** on Top.gg!\n\nYou receive **1,000 Kythia Coin** as a thank you!`
+                )
+                .setThumbnail(client.user.displayAvatarURL())
+                .setFooter({ text: `© ${kythia.bot.name} by ${kythia.owner.names}` });
+        }
+
+        // Send DM to voter
+        if (client) {
+            try {
+                const user = await client.users.fetch(userId);
+                if (user && dmEmbed) {
+                    await user.send({ embeds: [dmEmbed] });
+                }
+            } catch (err) {
+                logger.warn(`[Webhook] Could not DM Top.gg voter ${userId}: ${err?.message}`);
+            }
+        }
+
         if (webhookVoteLogs && client) {
             try {
                 const user = await client.users.fetch(userId);
@@ -175,7 +217,7 @@ router.post('/api/topgg-webhook', async (req, res) => {
                                         {
                                             type: 2,
                                             style: 5,
-                                            label: `Vote ${kythia.bot.name}`,
+                                            label: `🌸 Vote ${kythia.bot.name}`,
                                             url: `https://top.gg/bot/${kythia.bot.clientId}/vote`,
                                         },
                                     ],

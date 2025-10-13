@@ -8,10 +8,8 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 
 module.exports = {
-    guildOnly: true,
     subcommand: true,
     data: new SlashCommandBuilder()
         .setName('eco')
         .setDescription('💰 Get your money and become rich')
-        .setContexts(InteractionContextType.Guild),
 };
