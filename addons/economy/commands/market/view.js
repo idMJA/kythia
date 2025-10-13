@@ -43,7 +43,7 @@ module.exports = {
         let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
-                .setColor(interaction.client.kythia.bot.color)
+                .setColor(kythia.bot.color)
                 .setDescription(await t(interaction, 'economy_withdraw_no_account_desc'))
                 .setThumbnail(interaction.user.displayAvatarURL())
                 .setFooter(await embedFooter(interaction));
@@ -66,7 +66,7 @@ module.exports = {
                     const emoji = getChangeEmoji(data.usd_24h_change);
 
                     embed = new EmbedBuilder()
-                        .setColor(interaction.client.kythia.bot.color)
+                        .setColor(kythia.bot.color)
                         .setTitle(await t(interaction, 'economy_market_view_chart_title', { asset: assetId.toUpperCase() }))
                         .addFields(
                             { name: await t(interaction, 'economy_market_view_price_label'), value: `$${data.usd.toLocaleString()}`, inline: true },
@@ -119,12 +119,11 @@ module.exports = {
                 const prettyTable = formatMarketTable(assetRows);
 
                 embed = new EmbedBuilder()
-                    .setColor(interaction.client.kythia.bot.color)
+                    .setColor(kythia.bot.color)
                     .setDescription(`## ${await t(interaction, 'economy_market_view_all_title')}\n` + prettyTable)
                     .setFooter(await embedFooter(interaction));
             }
 
-            // -- SATU KALI SAJA PANGGIL REPLY/EDIT DI AKHIR --
             await interaction.editReply({ embeds: [embed], files: files });
         } catch (error) {
             console.error('Error in market view:', error);

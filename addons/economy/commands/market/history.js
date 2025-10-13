@@ -13,10 +13,7 @@ const { embedFooter } = require('@utils/discord');
 
 module.exports = {
     subcommand: true,
-    data: (subcommand) =>
-        subcommand
-            .setName('history')
-            .setDescription('View your transaction history.'),
+    data: (subcommand) => subcommand.setName('history').setDescription('View your transaction history.'),
 
     async execute(interaction) {
         await interaction.deferReply();
@@ -24,7 +21,7 @@ module.exports = {
         let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
-                .setColor(interaction.client.kythia.bot.color)
+                .setColor(kythia.bot.color)
                 .setDescription(await t(interaction, 'economy_withdraw_no_account_desc'))
                 .setThumbnail(interaction.user.displayAvatarURL())
                 .setFooter(await embedFooter(interaction));
@@ -40,29 +37,36 @@ module.exports = {
 
             if (transactions.length === 0) {
                 const emptyEmbed = new EmbedBuilder()
-                    .setColor(interaction.client.kythia.bot.color)
-                    .setDescription(`## ${await t(interaction, 'economy_market_history_empty_title')}\n${await t(interaction, 'economy_market_history_empty_desc')}`)
+                    .setColor(kythia.bot.color)
+                    .setDescription(
+                        `## ${await t(interaction, 'economy_market_history_empty_title')}\n${await t(interaction, 'economy_market_history_empty_desc')}`
+                    )
                     .setFooter(await embedFooter(interaction));
                 return interaction.editReply({ embeds: [emptyEmbed] });
             }
 
-            const description = transactions.map(tx => {
-                const side = tx.type.charAt(0).toUpperCase() + tx.type.slice(1);
-                const emoji = tx.type === 'buy' ? '🟢' : '🔴';
-                return `${emoji} **${side} ${tx.quantity.toFixed(6)} ${tx.assetId.toUpperCase()}** at $${tx.price.toLocaleString()} each\n*${new Date(tx.createdAt).toLocaleString()}*`;
-            }).join('\n\n');
+            const description = transactions
+                .map((tx) => {
+                    const side = tx.type.charAt(0).toUpperCase() + tx.type.slice(1);
+                    const emoji = tx.type === 'buy' ? '🟢' : '🔴';
+                    return `${emoji} **${side} ${tx.quantity.toFixed(6)} ${tx.assetId.toUpperCase()}** at $${tx.price.toLocaleString()} each\n*${new Date(tx.createdAt).toLocaleString()}*`;
+                })
+                .join('\n\n');
 
             const historyEmbed = new EmbedBuilder()
-                .setColor(interaction.client.kythia.bot.color)
+                .setColor(kythia.bot.color)
                 .setTitle(await t(interaction, 'economy_market_history_title', { username: interaction.user.username }))
                 .setDescription(description)
                 .setFooter(await embedFooter(interaction));
 
             await interaction.editReply({ embeds: [historyEmbed] });
-
         } catch (error) {
             console.error('Error in history command:', error);
-            const errorEmbed = new EmbedBuilder().setColor('Red').setDescription(`## ${await t(interaction, 'economy_market_history_error_title')}\n${await t(interaction, 'economy_market_history_error_desc')}`);
+            const errorEmbed = new EmbedBuilder()
+                .setColor('Red')
+                .setDescription(
+                    `## ${await t(interaction, 'economy_market_history_error_title')}\n${await t(interaction, 'economy_market_history_error_desc')}`
+                );
             await interaction.editReply({ embeds: [errorEmbed] });
         }
     },

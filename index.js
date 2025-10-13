@@ -46,8 +46,6 @@ require('dotenv').config();
 require('./kythia.config.js');
 
 require('module-alias/register');
-const cron = require('node-cron');
-const { processOrders } = require('@addons/economy/helpers/orderProcessor');
 
 const Kythia = require('./src/Kythia');
 const kythiaClient = require('./src/KythiaClient');
@@ -57,8 +55,3 @@ const client = kythiaClient();
 const kythiaInstance = new Kythia(client);
 kythiaInstance.client.kythia = kythiaInstance;
 kythiaInstance.start();
-
-// Schedule the order processor to run every minute
-cron.schedule('* * * * *', () => {
-    processOrders();
-});

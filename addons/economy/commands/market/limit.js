@@ -47,7 +47,7 @@ module.exports = {
         let user = await KythiaUser.getCache({ userId: interaction.user.id });
         if (!user) {
             const embed = new EmbedBuilder()
-                .setColor(interaction.client.kythia.bot.color)
+                .setColor(kythia.bot.color)
                 .setDescription(await t(interaction, 'economy_withdraw_no_account_desc'))
                 .setThumbnail(interaction.user.displayAvatarURL())
                 .setFooter(await embedFooter(interaction));

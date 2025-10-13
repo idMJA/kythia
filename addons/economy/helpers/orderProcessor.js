@@ -11,12 +11,14 @@ const MarketOrder = require('../database/models/MarketOrder');
 const MarketPortfolio = require('../database/models/MarketPortfolio');
 const MarketTransaction = require('../database/models/MarketTransaction');
 const { getMarketData } = require('./market');
+const logger = require('@utils/logger');
+const cron = require('node-cron');
 
 async function processOrders() {
-    console.log('Processing market orders...');
+    logger.info('Processing market orders...');
     try {
         const marketData = await getMarketData();
-        const openOrders = await MarketOrder.findAll({ where: { status: 'open' } });
+        const openOrders = await MarketOrder.getAllCache({ status: 'open' });
 
         for (const order of openOrders) {
             const assetData = marketData[order.assetId];
@@ -34,47 +36,82 @@ async function processOrders() {
             }
 
             if (shouldExecute) {
-                const user = await KythiaUser.findOne({ where: { userId: order.userId } });
+                const user = await KythiaUser.getCache({ userId: order.userId });
                 if (!user) continue;
 
                 if (order.side === 'buy') {
                     const totalCost = order.quantity * order.price;
                     // No need to check or deduct kythiaCoin here, as it was already deducted when the order was placed.
 
-                    const portfolio = await MarketPortfolio.findOne({ where: { userId: order.userId, assetId: order.assetId } });
+                    const portfolio = await MarketPortfolio.getCache({ userId: order.userId, assetId: order.assetId });
                     if (portfolio) {
-                            const newQuantity = portfolio.quantity + order.quantity;
-                            const newAvgPrice = (portfolio.quantity * portfolio.avgBuyPrice + order.quantity * order.price) / newQuantity;
-                            portfolio.quantity = newQuantity;
-                            portfolio.avgBuyPrice = newAvgPrice;
-                            await portfolio.save();
-                        } else {
-                            await MarketPortfolio.create({
-                                userId: order.userId,
-                                assetId: order.assetId,
-                                quantity: order.quantity,
-                                avgBuyPrice: order.price,
-                            });
-                        }
-
-                        order.status = 'filled';
-                        await MarketTransaction.create({ userId: order.userId, assetId: order.assetId, type: 'buy', quantity: order.quantity, price: order.price });
-                    } else { // sell
-                        // Assets were already deducted. We just need to give the user the coins.
-                        const totalReceived = order.quantity * currentPrice;
-                        user.kythiaCoin += totalReceived;
-
-                        order.status = 'filled';
-                        await MarketTransaction.create({ userId: order.userId, assetId: order.assetId, type: 'sell', quantity: order.quantity, price: currentPrice });
+                        const newQuantity = portfolio.quantity + order.quantity;
+                        const newAvgPrice = (portfolio.quantity * portfolio.avgBuyPrice + order.quantity * order.price) / newQuantity;
+                        portfolio.quantity = newQuantity;
+                        portfolio.avgBuyPrice = newAvgPrice;
+                        await portfolio.save();
+                    } else {
+                        await MarketPortfolio.create({
+                            userId: order.userId,
+                            assetId: order.assetId,
+                            quantity: order.quantity,
+                            avgBuyPrice: order.price,
+                        });
                     }
-                    await user.save();
-                    await order.save();
+
+                    order.status = 'filled';
+                    await MarketTransaction.create({
+                        userId: order.userId,
+                        assetId: order.assetId,
+                        type: 'buy',
+                        quantity: order.quantity,
+                        price: order.price,
+                    });
+                } else {
+                    // sell
+                    // Assets were already deducted. We just need to give the user the coins.
+                    const totalReceived = order.quantity * currentPrice;
+                    user.kythiaCoin += totalReceived;
+
+                    order.status = 'filled';
+                    await MarketTransaction.create({
+                        userId: order.userId,
+                        assetId: order.assetId,
+                        type: 'sell',
+                        quantity: order.quantity,
+                        price: currentPrice,
+                    });
                 }
+                await user.save();
+                await order.save();
             }
         }
     } catch (error) {
-        console.error('Error processing market orders:', error);
+        logger.error('Error processing market orders:', error);
     }
 }
 
-module.exports = { processOrders };
+/**
+ * Initialize scheduled market order processing.
+ * Mimics the style used in @ai/tasks/dailyGreeter.js.
+ * @param {Object} [options] Optional scheduling options (e.g. custom cron, timezone).
+ */
+function initializeOrderProcessing(options = {}) {
+    const schedule =
+        typeof kythia !== 'undefined' && kythia.addons && kythia.addons.economy && kythia.addons.economy.orderProcessorSchedule
+            ? kythia.addons.economy.orderProcessorSchedule
+            : '*/5 * * * *';
+
+    cron.schedule(
+        schedule,
+        async () => {
+            await processOrders();
+        },
+        {
+            timezone: typeof kythia !== 'undefined' && kythia.bot && kythia.bot.timezone ? kythia.bot.timezone : undefined,
+            ...options,
+        }
+    );
+}
+
+module.exports = { processOrders, initializeOrderProcessing };

@@ -98,7 +98,6 @@ class KythiaModel extends Model {
      * @returns {string} The final cache key, prefixed with the model's name (e.g., "User:{\"id\":1}").
      */
     static getCacheKey(queryIdentifier) {
-        // Always use the canonical format: `${this.CACHE_VERSION}:${this.name}:${keyBody}`
         const keyBody = typeof queryIdentifier === 'string' ? queryIdentifier : jsonStringify(this.normalizeQueryOptions(queryIdentifier));
         return `${this.CACHE_VERSION}:${this.name}:${keyBody}`;
     }
@@ -133,7 +132,6 @@ class KythiaModel extends Model {
      * @param {number} [ttl=this.DEFAULT_TTL] - The time-to-live for the entry in milliseconds.
      */
     static async setCacheEntry(cacheKeyOrQuery, data, ttl) {
-        // Always resolve to canonical cache key
         const cacheKey = typeof cacheKeyOrQuery === 'string' ? cacheKeyOrQuery : this.getCacheKey(cacheKeyOrQuery);
         const finalTtl = ttl || this.CACHE_TTL || this.DEFAULT_TTL;
 
@@ -150,13 +148,12 @@ class KythiaModel extends Model {
      * @param {string|Object} cacheKeyOrQuery - The key or query object of the item to retrieve.
      * @returns {Promise<{hit: boolean, data: *|undefined}>} An object indicating if the cache was hit and the retrieved data.
      */
-    static async getCachedEntry(cacheKeyOrQuery) {
-        // Always resolve to canonical cache key
+    static async getCachedEntry(cacheKeyOrQuery, includeOptions) {
         const cacheKey = typeof cacheKeyOrQuery === 'string' ? cacheKeyOrQuery : this.getCacheKey(cacheKeyOrQuery);
         if (this.isRedisConnected) {
-            return this._redisGetCachedEntry(cacheKey);
+            return this._redisGetCachedEntry(cacheKey, includeOptions);
         } else {
-            return this._mapGetCachedEntry(cacheKey);
+            return this._mapGetCachedEntry(cacheKey, includeOptions);
         }
     }
 
@@ -166,7 +163,6 @@ class KythiaModel extends Model {
      * @param {string|Object} keys - The query identifier used to generate the key to delete.
      */
     static async clearCache(keys) {
-        // Always resolve to canonical cache key
         const cacheKey = typeof keys === 'string' ? keys : this.getCacheKey(keys);
         if (this.isRedisConnected) {
             await this._redisClearCache(cacheKey);
@@ -209,7 +205,7 @@ class KythiaModel extends Model {
      * @returns {Promise<{hit: boolean, data: *|undefined}>} The cache result.
      * @private
      */
-    static async _redisGetCachedEntry(cacheKey) {
+    static async _redisGetCachedEntry(cacheKey, includeOptions) {
         try {
             const result = await this.redis.get(cacheKey);
             if (result === null || result === undefined) return { hit: false, data: undefined };
@@ -223,17 +219,22 @@ class KythiaModel extends Model {
                 return { hit: true, data: parsedData };
             }
 
-            // --- MULAI LOGIKA PERAKITAN ULANG ---
             const rebuild = (data) => {
                 const instance = this.build(data, { isNewRecord: false });
-                if (data.tracks && Array.isArray(data.tracks)) {
-                    const TrackModel = this.sequelize.models.PlaylistTrack;
-                    if (TrackModel) {
-                        const trackInstances = TrackModel.bulkBuild(data.tracks, { isNewRecord: false });
-                        instance.tracks = trackInstances;
-                        instance.dataValues.tracks = trackInstances;
+
+                if (includeOptions && Array.isArray(includeOptions)) {
+                    for (const include of includeOptions) {
+                        const as = include.as;
+                        const ModelToBuild = include.model;
+
+                        if (as && ModelToBuild && data[as] && Array.isArray(data[as])) {
+                            const associatedInstances = ModelToBuild.bulkBuild(data[as], { isNewRecord: false });
+                            instance[as] = associatedInstances;
+                            instance.dataValues[as] = associatedInstances;
+                        }
                     }
                 }
+
                 return instance;
             };
 
@@ -303,7 +304,7 @@ class KythiaModel extends Model {
      * @returns {{hit: boolean, data: *|undefined}} The cache result.
      * @private
      */
-    static _mapGetCachedEntry(cacheKey) {
+    static _mapGetCachedEntry(cacheKey, includeOptions) {
         if (this.localNegativeCache.has(cacheKey)) {
             this.cacheStats.mapHits++;
             return { hit: true, data: null };
@@ -321,14 +322,20 @@ class KythiaModel extends Model {
 
             const rebuild = (data) => {
                 const instance = this.build(data, { isNewRecord: false });
-                if (data.tracks && Array.isArray(data.tracks)) {
-                    const TrackModel = this.sequelize.models.PlaylistTrack;
-                    if (TrackModel) {
-                        const trackInstances = TrackModel.bulkBuild(data.tracks, { isNewRecord: false });
-                        instance.tracks = trackInstances;
-                        instance.dataValues.tracks = trackInstances;
+
+                if (includeOptions && Array.isArray(includeOptions)) {
+                    for (const include of includeOptions) {
+                        const as = include.as;
+                        const ModelToBuild = include.model;
+
+                        if (as && ModelToBuild && data[as] && Array.isArray(data[as])) {
+                            const associatedInstances = ModelToBuild.bulkBuild(data[as], { isNewRecord: false });
+                            instance[as] = associatedInstances;
+                            instance.dataValues[as] = associatedInstances;
+                        }
                     }
                 }
+
                 return instance;
             };
 
@@ -393,7 +400,7 @@ class KythiaModel extends Model {
         if (!normalizedOptions.where || Object.keys(normalizedOptions.where).length === 0) return null;
         const cacheKey = this.getCacheKey(normalizedOptions);
 
-        const cacheResult = await this.getCachedEntry(cacheKey);
+        const cacheResult = await this.getCachedEntry(cacheKey, normalizedOptions.include);
         if (cacheResult.hit) {
             return cacheResult.data;
         }
@@ -430,7 +437,7 @@ class KythiaModel extends Model {
         const normalizedOptions = this._normalizeFindOptions(options);
         const cacheKey = this.getCacheKey(normalizedOptions);
 
-        const cacheResult = await this.getCachedEntry(cacheKey);
+        const cacheResult = await this.getCachedEntry(cacheKey, normalizedOptions.include);
         if (cacheResult.hit) {
             return cacheResult.data;
         }
@@ -564,7 +571,6 @@ class KythiaModel extends Model {
                 }
             }
             for (const keyObj of potentialKeyObjects) {
-                // Always use canonical cache key format
                 keys.add(modelClass.getCacheKey(keyObj));
                 keys.add(modelClass.getCacheKey({ where: keyObj }));
             }

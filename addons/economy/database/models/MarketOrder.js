@@ -1,49 +1,39 @@
 /**
  * @namespace: addons/economy/database/models/MarketOrder.js
- * @type: Model
+ * @type: Database Model
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
  * @version 0.9.9-beta-rc.3
  */
+
 const { DataTypes } = require('sequelize');
+const sequelize = require('@src/database/KythiaSequelize');
+const KythiaModel = require('@src/database/KythiaModel');
 
-module.exports = (sequelize) => {
-    const MarketOrder = sequelize.define(
-        'MarketOrder',
-        {
-            userId: {
-                type: DataTypes.STRING,
-                allowNull: false,
+class MarketOrder extends KythiaModel {
+    static init(sequelize) {
+        super.init(
+            {
+                orderId: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+                userId: { type: DataTypes.STRING, allowNull: false },
+                assetId: { type: DataTypes.STRING, allowNull: false },
+                type: { type: DataTypes.STRING, allowNull: false }, // 'limit' or 'stoploss'
+                side: { type: DataTypes.STRING, allowNull: false }, // 'buy' or 'sell'
+                quantity: { type: DataTypes.DOUBLE, allowNull: false },
+                price: { type: DataTypes.DOUBLE, allowNull: false },
+                status: { type: DataTypes.STRING, allowNull: false, defaultValue: 'open' }, // 'open', 'filled', 'cancelled'
             },
-            assetId: {
-                type: DataTypes.STRING,
-                allowNull: false,
-            },
-            type: {
-                type: DataTypes.STRING, // 'limit' or 'stoploss'
-                allowNull: false,
-            },
-            side: {
-                type: DataTypes.STRING, // 'buy' or 'sell'
-                allowNull: false,
-            },
-            quantity: {
-                type: DataTypes.FLOAT,
-                allowNull: false,
-            },
-            price: {
-                type: DataTypes.FLOAT,
-                allowNull: false,
-            },
-            status: {
-                type: DataTypes.STRING, // 'open', 'filled', 'cancelled'
-                defaultValue: 'open',
-            },
-        },
-        {
-            timestamps: true,
-        }
-    );
+            {
+                sequelize,
+                modelName: 'MarketOrder',
+                tableName: 'market_orders',
+                timestamps: true,
+                indexes: [{ fields: ['userId'] }, { fields: ['userId', 'assetId'] }],
+            }
+        );
+        return this;
+    }
+}
 
-    return MarketOrder;
-};
+MarketOrder.init(sequelize);
+module.exports = MarketOrder;
