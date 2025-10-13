@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.9-beta-rc.3](https://github.com/kythia/kythia/compare/v0.9.9-beta-rc.2...v0.9.9-beta-rc.3) (2025-10-13)
+
+
+### 🔨 Fixed
+
+* changing example.env and example.kythia.config.js to main as is ([2e995fa](https://github.com/kythia/kythia/commit/2e995fa37a75dae702f6439eb6383c803e25b180))
+* update start script in package.json to include --deploy flag for proper deployment ([5302312](https://github.com/kythia/kythia/commit/530231261a017574c02cbfd3e69a4b1276642f48))
+
+
+### 🔧 Changed
+
+* changing pet addon to follow kythia user and coin ([3289cfb](https://github.com/kythia/kythia/commit/3289cfb7d7540e627a2c3d28f72d8591fbe99486))
+* remove cooldown settings from various economy commands and update language strings to use "kythia coin" instead of "cash" ([f964b43](https://github.com/kythia/kythia/commit/f964b43c2535aea7b7970e6aafc037340a13f6ab))
+* update dashboard routes to improve settings handling and enhance feature toggles; remove deprecated routes and streamline automod settings ([4947de9](https://github.com/kythia/kythia/commit/4947de944b5fa515658ea4dee2283571b4881bf1))
+* update navbar and sidebar icons for improved UI consistency; ([0f6a530](https://github.com/kythia/kythia/commit/0f6a530d8ab239852cf3ddb3189c8f9d5e469166))
+* update permissions for 'say' command and enhance landing page content; remove deprecated mobile navigation and improve layout styling ([f5fd57e](https://github.com/kythia/kythia/commit/f5fd57eef980233c8545ea3073c4a024db2374e4))
+
+
+### ✨ Added
+
+* (api) Enhance Top.gg webhook handling with user account prompts and rewards ([3b715e0](https://github.com/kythia/kythia/commit/3b715e0159f77e1fd2c807bbe85982dde953eeb8))
+* (economy) Enhance bank command information, functionality and user experience ([0c2bff8](https://github.com/kythia/kythia/commit/0c2bff80280e6e3777c3f5951f8c36871104901a))
+* add GuildMemberRemove event handler to track user departures and send goodbye messages with customizable banners (not tested yet) ([6f84826](https://github.com/kythia/kythia/commit/6f8482666e417940c5cc9c191115d3f3aaee1a17))
+* Add new market-related language strings for asset transactions in economy addon ([82acfc9](https://github.com/kythia/kythia/commit/82acfc991e15c7eb5a52354ca651dc2bce5f55ca))
+* **economy:** Enhance economy commands with bank type benefits ([eb22c56](https://github.com/kythia/kythia/commit/eb22c5661e30d3581fd5deb1ddbd662bfa0d0359))
+* **economy:** Refactor economy commands to use a global user model ([6dfb60b](https://github.com/kythia/kythia/commit/6dfb60b5899bd6b6e9cd2721748d6325186417e2))
+* **economy:** Update economy commands to use kythiaCoin and kythiaBank ([e71b40e](https://github.com/kythia/kythia/commit/e71b40e7cf7da35d210b7b85a2fe214be5520a76))
+* implement Kythia team management command with add, delete, and list functionalities; enhance error handling and logging ([ee3f94d](https://github.com/kythia/kythia/commit/ee3f94dea4065fa8172b19c9cecde6c35416c5cd))
+
 ### 0.9.9-beta-rc.2 (2025-10-09)
 
 
