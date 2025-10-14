@@ -116,6 +116,7 @@ module.exports = {
                     premiumExpiresAt: { [Op.gt]: now },
                 },
                 order: [['premiumExpiresAt', 'ASC']],
+                cacheTags: ['KythiaUser:premium:list']
             });
 
             if (!list.length) {

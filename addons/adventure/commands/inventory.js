@@ -5,7 +5,7 @@
  * @assistant chaa & graa
  * @version 0.9.9-beta-rc.3
  */
-const Inventory = require('../database/models/InventoryAdventure');
+const InventoryAdventure = require('../database/models/InventoryAdventure');
 const User = require('../database/models/UserAdventure');
 const { embedFooter } = require('@utils/discord');
 const { EmbedBuilder } = require('discord.js');
@@ -38,7 +38,10 @@ module.exports = {
             return interaction.editReply({ embeds: [embed] });
         }
 
-        const inventory = await Inventory.getAllCache({ userId: userId });
+        const inventory = await InventoryAdventure.getAllCache({
+            where: { userId: userId },
+            cacheTags: [`InventoryAdventure:inventory:byUser:${userId}`],
+        });
 
         if (inventory.length === 0) {
             const embed = new EmbedBuilder()

@@ -17,11 +17,15 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply();
 
-        const pets = await Pet.findAll();
+        const pets = await Pet.getAllCache({
+            cacheTags: ['Pet:all'],
+        });
         if (!pets.length) {
             const embed = new EmbedBuilder()
-                .setDescription(`## ${await t(interaction, 'pet_admin_list_list_empty_title')}\n${await t(interaction, 'pet_admin_list_list_empty')}`)
-                .setColor("Red")
+                .setDescription(
+                    `## ${await t(interaction, 'pet_admin_list_list_empty_title')}\n${await t(interaction, 'pet_admin_list_list_empty')}`
+                )
+                .setColor('Red')
                 .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }

@@ -132,6 +132,7 @@ async function getUserFactsString(userId) {
         where: { userId: userId },
         order: [['createdAt', 'DESC']],
         limit: 50,
+        cacheTags: [`UserFact:byUser:${userId}`],
     });
 
     if (!userFacts || userFacts.length === 0) return '';

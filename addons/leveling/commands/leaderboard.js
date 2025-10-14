@@ -16,14 +16,15 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.deferReply();
-
-        const topUsers = await User.findAll({
-            where: { guildId: interaction.guild.id },
+        const guildId = interaction.guild.id;
+        const topUsers = await User.getAllCache({
+            where: { guildId: guildId },
             order: [
                 ['level', 'DESC'],
                 ['xp', 'DESC'],
             ],
             limit: 10,
+            cacheTags: [`User:leaderboard:byGuild:${guildId}`],
         });
 
         let leaderboard;

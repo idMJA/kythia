@@ -1829,8 +1829,6 @@ class Kythia {
             this.container.sequelize = sequelize;
             this.kythiaManager = new KythiaManager(ServerSetting);
             this.container.kythiaManager = this.kythiaManager;
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Kythia Manager ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
-            await this.kythiaManager.warmCache();
             logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Kythia Addons ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
             const allCommands = await this._loadAddons();
             this._initializeEventHandlers();

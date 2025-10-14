@@ -17,7 +17,7 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply();
 
-        const leaderboard = await UserPet.findAll({
+        const leaderboard = await UserPet.getAllCache({
             include: { model: Pet, as: 'pet' },
             order: [
                 [
@@ -28,6 +28,7 @@ module.exports = {
                 ],
                 ['level', 'DESC'],
             ],
+            cacheTags: ['UserPet:leaderboard'],
         });
 
         let leaderboardDesc;
@@ -51,9 +52,7 @@ module.exports = {
         }
 
         const embed = new EmbedBuilder()
-            .setDescription(
-                `## ${await t(interaction, 'pet_leaderboard_title')}\n${leaderboardDesc}`
-            )
+            .setDescription(`## ${await t(interaction, 'pet_leaderboard_title')}\n${leaderboardDesc}`)
             .setColor(kythia.bot.color)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
             .setFooter(await embedFooter(interaction))

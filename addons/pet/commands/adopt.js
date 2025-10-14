@@ -25,7 +25,7 @@ module.exports = {
         if (existingPet) {
             const embed = new EmbedBuilder()
                 .setDescription(`## ${await t(interaction, 'pet_adopt_already_title')}\n${await t(interaction, 'pet_adopt_already')}`)
-                .setColor("Red")
+                .setColor('Red')
                 .setFooter(await embedFooter(interaction));
             return interaction.editReply({ embeds: [embed] });
         }
@@ -34,8 +34,9 @@ module.exports = {
         if (deadPet) {
             await deadPet.destroy();
         }
-        const pets = await Pet.findAll();
-
+        const pets = await Pet.getAllCache({
+            cacheTags: ['Pet:all'],
+        });
         const rarities = {
             common: 50,
             rare: 25,

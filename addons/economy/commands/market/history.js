@@ -29,10 +29,11 @@ module.exports = {
         }
 
         try {
-            const transactions = await MarketTransaction.findAll({
+            const transactions = await MarketTransaction.getAllCache({
                 where: { userId: interaction.user.id },
                 order: [['createdAt', 'DESC']],
-                limit: 10, // Limit to the last 10 transactions for now
+                limit: 10,
+                cacheTags: [`MarketTransaction:byUser:${interaction.user.id}`],
             });
 
             if (transactions.length === 0) {

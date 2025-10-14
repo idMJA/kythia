@@ -71,7 +71,8 @@ module.exports = {
         if (sub === 'add' || sub === 'remove') {
             if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
                 embed.setDescription(
-                    `## ${await t(interaction, 'invite_invite_command_title')}\n` + (await t(interaction, 'invite_invite_command_no_permission'))
+                    `## ${await t(interaction, 'invite_invite_command_title')}\n` +
+                        (await t(interaction, 'invite_invite_command_no_permission'))
                 );
                 return interaction.editReply({ embeds: [embed] });
             }
@@ -94,7 +95,12 @@ module.exports = {
         }
 
         if (sub === 'leaderboard') {
-            const top = await Invite.findAll({ where: { guildId }, order: [['invites', 'DESC']], limit: 10 });
+            const top = await Invite.getAllCache({
+                where: { guildId },
+                order: [['invites', 'DESC']],
+                limit: 10,
+                cacheTags: [`Invite:leaderboard`],
+            });
             const lines = top.map(
                 async (r, i) =>
                     await t(interaction, 'invite_invite_command_leaderboard_line', {
@@ -113,13 +119,15 @@ module.exports = {
         if (sub === 'reset') {
             if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
                 embed.setDescription(
-                    `## ${await t(interaction, 'invite_invite_command_title')}\n` + (await t(interaction, 'invite_invite_command_no_permission'))
+                    `## ${await t(interaction, 'invite_invite_command_title')}\n` +
+                        (await t(interaction, 'invite_invite_command_no_permission'))
                 );
                 return interaction.editReply({ embeds: [embed] });
             }
             await Invite.destroy({ where: { guildId } });
             embed.setDescription(
-                `## ${await t(interaction, 'invite_invite_command_title')}\n` + (await t(interaction, 'invite_invite_command_reset_success'))
+                `## ${await t(interaction, 'invite_invite_command_title')}\n` +
+                    (await t(interaction, 'invite_invite_command_reset_success'))
             );
             return interaction.editReply({ embeds: [embed] });
         }

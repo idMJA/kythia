@@ -1202,6 +1202,7 @@ async function _handlePlaylistList(interaction) {
     const playlists = await Playlist.getAllCache({
         where: { userId: userId },
         order: [['name', 'ASC']],
+        cacheTags: [`Playlist:byUser:${userId}`],
     });
 
     if (!playlists || playlists.length === 0) {
@@ -1960,7 +1961,11 @@ async function _handleFavoritePlay(interaction, player) {
     const userId = interaction.user.id;
 
     // Get all favorites for the user
-    const favorites = await Favorite.findAll({ where: { userId }, order: [['createdAt', 'ASC']] });
+    const favorites = await Favorite.getAllCache({
+        where: { userId },
+        order: [['createdAt', 'ASC']],
+        cacheTags: [`Favorite:byUser:${userId}`],
+    });
 
     if (!favorites || favorites.length === 0) {
         const embed = new EmbedBuilder().setColor('Red').setDescription(await t(interaction, 'music_helpers_handlers_favorite_play_empty'));
@@ -2006,6 +2011,7 @@ async function _handleFavoriteList(interaction) {
     const favorites = await Favorite.getAllCache({
         where: { userId },
         order: [['createdAt', 'ASC']],
+        cacheTags: [`Favorite:byUser:${userId}`],
     });
 
     if (!favorites || favorites.length === 0) {

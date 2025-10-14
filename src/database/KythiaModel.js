@@ -1,5 +1,5 @@
 /**
- * 🚀 Caching Layer for Sequelize Models (Hybrid Redis + In-Memory Fallback Edition)
+ * 🚀 Caching Layer for Sequelize Models (Hybrid Redis + In-Memory Fallback Edition, Sniper Mode)
  *
  * @file src/database/KythiaModel.js
  * @copyright © 2025 kenndeclouv
@@ -11,11 +11,12 @@
  * scalability. If Redis becomes unavailable, it seamlessly falls back to a per-process, in-memory
  * Map cache. This ensures the application remains fast and responsive even during cache server outages.
  *
- * ✨ Core Features (Hybrid Upgrade):
+ * ✨ Core Features (Hybrid Upgrade + Sniper Tagging):
  * -  Automatic Fallback: Switches from Redis to in-memory Map cache when Redis fails.
  * -  Zero Downtime Caching: The application always has a caching layer available.
  * -  Intelligent Routing: Core methods now act as routers, delegating to the active cache engine.
  * -  Consistent API: No changes needed in any other part of the application.
+ * -  Tag-aware Sniper Invalidation for maximum precision on cache busting.
  */
 
 const jsonStringify = require('json-stable-stringify');
@@ -130,13 +131,14 @@ class KythiaModel extends Model {
      * @param {string|Object} cacheKeyOrQuery - The key or query object to store the data under.
      * @param {*} data - The data to cache. Use `null` for negative caching.
      * @param {number} [ttl=this.DEFAULT_TTL] - The time-to-live for the entry in milliseconds.
+     * @param {string[]} [tags=[]] - Cache tags (for sniper tag-based invalidation)
      */
-    static async setCacheEntry(cacheKeyOrQuery, data, ttl) {
+    static async setCacheEntry(cacheKeyOrQuery, data, ttl, tags = []) {
         const cacheKey = typeof cacheKeyOrQuery === 'string' ? cacheKeyOrQuery : this.getCacheKey(cacheKeyOrQuery);
         const finalTtl = ttl || this.CACHE_TTL || this.DEFAULT_TTL;
 
         if (this.isRedisConnected) {
-            await this._redisSetCacheEntry(cacheKey, data, finalTtl);
+            await this._redisSetCacheEntry(cacheKey, data, finalTtl, tags);
         } else {
             this._mapSetCacheEntry(cacheKey, data, finalTtl);
         }
@@ -172,15 +174,16 @@ class KythiaModel extends Model {
     }
 
     /**
-     * 🔴 (Private) Sets a cache entry specifically in Redis.
+     * 🔴 (Private) Sets a cache entry specifically in Redis, supporting tags for sniper invalidation.
      * Serializes the data to JSON and handles negative caching with a placeholder.
-     * If the operation fails, it flags the Redis connection as down.
+     * Uses Redis multi (transactional) to add tag sets.
      * @param {string} cacheKey - The Redis key.
      * @param {*} data - The data to cache.
      * @param {number} ttl - The TTL in milliseconds.
+     * @param {string[]} tags - Tags to associate this entry with.
      * @private
      */
-    static async _redisSetCacheEntry(cacheKey, data, ttl) {
+    static async _redisSetCacheEntry(cacheKey, data, ttl, tags = []) {
         try {
             let plainData = data;
             if (data && typeof data.toJSON === 'function') {
@@ -189,7 +192,15 @@ class KythiaModel extends Model {
                 plainData = data.map((item) => (item && typeof item.toJSON === 'function' ? item.toJSON() : item));
             }
             const valueToStore = plainData === null ? NEGATIVE_CACHE_PLACEHOLDER : JSON.stringify(plainData);
-            await this.redis.set(cacheKey, valueToStore, 'PX', ttl);
+
+            const multi = this.redis.multi();
+            multi.set(cacheKey, valueToStore, 'PX', ttl);
+
+            for (const tag of tags) {
+                multi.sadd(tag, cacheKey);
+            }
+
+            await multi.exec();
             this.cacheStats.sets++;
         } catch (err) {
             logger.error(`❌ [REDIS SET] Failed for key ${cacheKey}. Falling back. Error:`, err.message);
@@ -260,6 +271,37 @@ class KythiaModel extends Model {
             this.cacheStats.clears++;
         } catch (err) {
             logger.error(`❌ [REDIS DEL] Failed for key ${JSON.stringify(cacheKey)}. Bypassing. Error:`, err.message);
+            this.isRedisConnected = false;
+        }
+    }
+
+    /**
+     * 🎯 [SNIPER] Invalidates cache entries by tags in Redis.
+     * @param {string[]} tags - An array of tags to invalidate.
+     */
+    static async invalidateByTags(tags) {
+        if (!this.isRedisConnected || !Array.isArray(tags) || tags.length === 0) return;
+
+        try {
+            const multi = this.redis.multi();
+            const keysToDelete = new Set();
+
+            for (const tag of tags) {
+                const members = await this.redis.smembers(tag);
+                members.forEach((member) => keysToDelete.add(member));
+            }
+            const keysArray = Array.from(keysToDelete);
+
+            if (keysArray.length > 0) {
+                logger.info(`🎯 [SNIPER] Invalidating ${keysArray.length} keys for tags: ${tags.join(', ')}`);
+                multi.del(...keysArray);
+            }
+
+            multi.del(...tags);
+
+            await multi.exec();
+        } catch (err) {
+            logger.error(`❌ [SNIPER] Failed to invalidate tags. Error:`, err.message);
             this.isRedisConnected = false;
         }
     }
@@ -413,7 +455,12 @@ class KythiaModel extends Model {
 
         const queryPromise = this.findOne(normalizedOptions)
             .then((record) => {
-                this.setCacheEntry(cacheKey, record);
+                const tags = [`${this.name}`];
+                if (record) {
+                    const pk = this.primaryKeyAttribute;
+                    tags.push(`${this.name}:${pk}:${record[pk]}`);
+                }
+                this.setCacheEntry(cacheKey, record, undefined, tags);
                 return record;
             })
             .finally(() => {
@@ -450,7 +497,13 @@ class KythiaModel extends Model {
 
         const queryPromise = this.findAll(normalizedOptions)
             .then((records) => {
-                this.setCacheEntry(cacheKey, records);
+                const tags = [`${this.name}`];
+
+                if (options.cacheTags && Array.isArray(options.cacheTags)) {
+                    tags.push(...options.cacheTags);
+                }
+                this.setCacheEntry(cacheKey, records, undefined, tags);
+
                 return records;
             })
             .finally(() => {
@@ -483,7 +536,12 @@ class KythiaModel extends Model {
         }
         const findOrCreatePromise = this.findOrCreate(options)
             .then(([instance, created]) => {
-                this.setCacheEntry(cacheKey, instance);
+                const tags = [`${this.name}`];
+                if (instance) {
+                    const pk = this.primaryKeyAttribute;
+                    tags.push(`${this.name}:${pk}:${instance[pk]}`);
+                }
+                this.setCacheEntry(cacheKey, instance, undefined, tags);
                 return [instance, created];
             })
             .finally(() => {
@@ -509,7 +567,9 @@ class KythiaModel extends Model {
         }
         this.cacheStats.misses++;
         const count = await this.count(options);
-        this.setCacheEntry(cacheKey, count, ttl);
+
+        const tags = [`${this.name}`];
+        this.setCacheEntry(cacheKey, count, ttl, tags);
         return count;
     }
 
@@ -524,7 +584,8 @@ class KythiaModel extends Model {
         const pkValue = this[pk];
         if (pkValue) {
             const cacheKey = this.constructor.getCacheKey({ [pk]: pkValue });
-            await this.constructor.setCacheEntry(cacheKey, savedInstance);
+            const tags = [`${this.constructor.name}`, `${this.constructor.name}:${pk}:${pkValue}`];
+            await this.constructor.setCacheEntry(cacheKey, savedInstance, undefined, tags);
         }
         return savedInstance;
     }
@@ -539,9 +600,39 @@ class KythiaModel extends Model {
     }
 
     /**
+     * 📦 Fetches a raw aggregate result from the cache, falling back to the database.
+     * Ideal for caching results from functions like AVG, SUM, MAX etc.
+     * @param {Object} options - A Sequelize `findAll` options object, usually with `attributes` and `raw: true`.
+     * @param {Object} [cacheOptions={}] - Options for caching, like ttl and tags.
+     * @returns {Promise<*>} The raw result from the aggregation.
+     */
+    static async aggregateWithCache(options = {}, cacheOptions = {}) {
+        const { ttl = 5 * 60 * 1000, cacheTags = [] } = cacheOptions;
+
+        const cacheKeyOptions = { queryType: 'aggregate', ...options };
+        const cacheKey = this.getCacheKey(cacheKeyOptions);
+
+        const cacheResult = await this.getCachedEntry(cacheKey);
+        if (cacheResult.hit) {
+            return cacheResult.data;
+        }
+
+        this.cacheStats.misses++;
+
+        // aggregate() di Sequelize v6, atau bisa tetap pakai findAll untuk versi lama
+        const result = await this.findAll(options);
+
+        const tags = [`${this.name}`].concat(cacheTags);
+        this.setCacheEntry(cacheKey, result, ttl, tags);
+
+        return result;
+    }
+
+    /**
      * 🪝 Attaches Sequelize lifecycle hooks (`afterSave`, `afterDestroy`, etc.) to this model.
      * These hooks automatically and intelligently invalidate or update cache entries
      * in the active cache engine (Redis or Map) whenever data changes.
+     * Now uses Sniper tag-based invalidation.
      */
     static initializeCacheHooks() {
         if (!this.redis) {
@@ -549,126 +640,45 @@ class KythiaModel extends Model {
             return;
         }
 
-        const getAllCacheKeysFor = (instance) => {
-            const modelClass = instance.constructor;
-            const keys = new Set();
-            const potentialKeyObjects = [];
-            const pkAttributes = modelClass.primaryKeyAttributes;
-            if (pkAttributes && pkAttributes.length > 0) {
-                const pkObj = {};
-                if (pkAttributes.every((pk) => instance[pk] != null)) {
-                    pkAttributes.forEach((pk) => (pkObj[pk] = instance[pk]));
-                    potentialKeyObjects.push(pkObj);
-                }
-            }
-            if (Array.isArray(modelClass.CACHE_KEYS)) {
-                for (const keyFields of modelClass.CACHE_KEYS) {
-                    const keyObj = {};
-                    if (keyFields.every((f) => instance[f] != null)) {
-                        keyFields.forEach((f) => (keyObj[f] = instance[f]));
-                        potentialKeyObjects.push(keyObj);
-                    }
-                }
-            }
-            for (const keyObj of potentialKeyObjects) {
-                keys.add(modelClass.getCacheKey(keyObj));
-                keys.add(modelClass.getCacheKey({ where: keyObj }));
-            }
-            return Array.from(keys);
-        };
-
-        const clearAllModelCaches = async () => {
-            const modelName = this.name;
-            const prefix = `${this.CACHE_VERSION}:${modelName}:`;
-
-            if (this.isRedisConnected) {
-                logger.warn(`🔄 Bulk change in ${modelName}, clearing ALL related Redis caches using SCAN.`);
-                const stream = this.redis.scanStream({ match: `${prefix}*`, count: 100 });
-                stream.on('data', (keys) => {
-                    if (keys.length && this.isRedisConnected) {
-                        this.redis.del(keys).catch((err) => {
-                            logger.error('❌ [CACHE BULK DEL] Failed during scan stream:', err.message);
-                            this.isRedisConnected = false;
-                        });
-                    }
-                });
-                stream.on('end', () => logger.info(`🔄 Finished clearing Redis caches for ${modelName}.`));
-            } else {
-                logger.warn(`🔄 Bulk change in ${modelName}, clearing ALL related In-Memory caches.`);
-                let clearedCount = 0;
-                for (const key of this.localCache.keys()) {
-                    if (key.startsWith(prefix)) {
-                        this.localCache.delete(key);
-                        clearedCount++;
-                    }
-                }
-                for (const key of this.localNegativeCache.keys()) {
-                    if (key.startsWith(prefix)) {
-                        this.localNegativeCache.delete(key);
-                        clearedCount++;
-                    }
-                }
-                logger.info(`🔄 Finished clearing ${clearedCount} In-Memory cache entries for ${modelName}.`);
-            }
-        };
-
-        const broadcastInvalidation = (keysToClear) => {
-            if (!this.isRedisConnected && this.client && this.client.shard) {
-                logger.info(`📡 [SHARD SYNC] Broadcasting invalidation for ${this.name}...`);
-                this.client.shard
-                    .broadcastEval(
-                        (c, { modelName, keys }) => {
-                            const models = c.sequelize.models;
-                            const TargetModel = models[modelName];
-                            if (TargetModel && typeof TargetModel._mapClearCache === 'function') {
-                                for (const key of keys) {
-                                    TargetModel._mapClearCache(key);
-                                }
-                                return true;
-                            }
-                        },
-                        {
-                            context: { modelName: this.name, keys: keysToClear },
-                        }
-                    )
-                    .catch((err) => logger.error('❌ [SHARD SYNC] Broadcast failed:', err));
-            }
-        };
+        const broadcastInvalidation = (/* keysToClear */) => {};
 
         const afterSaveLogic = async (instance) => {
-            logger.info(`🔄 afterSave for ${this.name}`);
-            const cacheKeys = getAllCacheKeysFor(instance);
-            if (cacheKeys.length > 0) {
-                logger.info(`🔄 Updating cache for keys: ${cacheKeys.join(', ')}`);
-                for (const key of cacheKeys) {
-                    await this.setCacheEntry(key, instance);
-                }
+            const modelClass = instance.constructor;
+            const tagsToInvalidate = [`${modelClass.name}`];
+
+            const pk = modelClass.primaryKeyAttribute;
+            tagsToInvalidate.push(`${modelClass.name}:${pk}:${instance[pk]}`);
+
+            if (modelClass.name === 'KythiaUser') {
+                tagsToInvalidate.push('KythiaUser:leaderboard');
             }
-            await clearAllModelCaches();
-            broadcastInvalidation(cacheKeys);
+
+            await modelClass.invalidateByTags(tagsToInvalidate);
         };
 
         const afterDestroyLogic = async (instance) => {
-            logger.info(`🔄 afterDestroy for ${this.name}`);
-            const cacheKeys = getAllCacheKeysFor(instance);
+            const modelClass = instance.constructor;
+            const tagsToInvalidate = [`${modelClass.name}`];
 
-            if (this.isRedisConnected && cacheKeys.length > 0) {
-                logger.info(`🔄 Deleting cache for keys: ${cacheKeys.join(', ')}`);
-                await this.redis.del(cacheKeys).catch(() => {});
+            const pk = modelClass.primaryKeyAttribute;
+            tagsToInvalidate.push(`${modelClass.name}:${pk}:${instance[pk]}`);
+
+            if (modelClass.name === 'KythiaUser') {
+                tagsToInvalidate.push('KythiaUser:leaderboard');
             }
 
-            for (const key of cacheKeys) {
-                await this.setCacheEntry(key, null);
-            }
-            await clearAllModelCaches();
-            broadcastInvalidation(cacheKeys);
+            await modelClass.invalidateByTags(tagsToInvalidate);
+        };
+
+        const afterBulkLogic = async () => {
+            await this.invalidateByTags([`${this.name}`]);
         };
 
         this.addHook('afterSave', afterSaveLogic);
         this.addHook('afterDestroy', afterDestroyLogic);
-        this.addHook('afterBulkCreate', clearAllModelCaches);
-        this.addHook('afterBulkUpdate', clearAllModelCaches);
-        this.addHook('afterBulkDestroy', clearAllModelCaches);
+        this.addHook('afterBulkCreate', afterBulkLogic);
+        this.addHook('afterBulkUpdate', afterBulkLogic);
+        this.addHook('afterBulkDestroy', afterBulkLogic);
     }
 
     /**

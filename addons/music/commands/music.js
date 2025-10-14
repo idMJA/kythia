@@ -373,6 +373,7 @@ module.exports = {
                 const userPlaylists = await Playlist.getAllCache({
                     where: { userId: interaction.user.id },
                     limit: 25,
+                    cacheTags: [`Playlist:byUser:${interaction.user.id}`],
                 });
                 if (!userPlaylists) return interaction.respond([]);
                 const filteredChoices = userPlaylists
@@ -392,6 +393,7 @@ module.exports = {
                 const userFavorites = await Favorite.getAllCache({
                     where: { userId: interaction.user.id },
                     limit: 25,
+                    cacheTags: [`Favorite:byUser:${interaction.user.id}`],
                 });
                 if (!userFavorites) return interaction.respond([]);
                 const filteredChoices = userFavorites

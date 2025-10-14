@@ -111,9 +111,7 @@ async function generateLeaderboardContainer(interaction, page, topUsers, totalUs
             )
         )
         // Add navigation buttons using addActionRowComponents, see about.js
-        .addActionRowComponents(
-            new ActionRowBuilder().addComponents(...navButtons)
-        );
+        .addActionRowComponents(new ActionRowBuilder().addComponents(...navButtons));
 
     return { container, page, totalPages };
 }
@@ -126,12 +124,11 @@ module.exports = {
         await interaction.deferReply();
 
         // Fetch all users ordered by total wealth (coin + bank)
-        const allUsers = await KythiaUser.findAll({
+        const allUsers = await KythiaUser.getAllCache({
             attributes: ['userId', 'kythiaCoin', 'kythiaBank'],
-            order: [
-                [KythiaUser.sequelize.literal('(kythiaCoin + kythiaBank)'), 'DESC'],
-            ],
+            order: [[KythiaUser.sequelize.literal('(kythiaCoin + kythiaBank)'), 'DESC']],
             limit: MAX_USERS,
+            cacheTags: ['KythiaUser:leaderboard'],
         });
 
         const totalUsers = allUsers.length;
@@ -177,12 +174,7 @@ module.exports = {
                 currentPage = totalPages;
             }
 
-            const { container: newContainer, page: newPage } = await generateLeaderboardContainer(
-                i,
-                currentPage,
-                allUsers,
-                totalUsers
-            );
+            const { container: newContainer, page: newPage } = await generateLeaderboardContainer(i, currentPage, allUsers, totalUsers);
 
             await i.update({
                 components: [newContainer],

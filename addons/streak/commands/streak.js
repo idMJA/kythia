@@ -177,13 +177,14 @@ module.exports = {
 
             if (sub === 'leaderboard') {
                 await interaction.deferReply();
-                const topStreaks = await Streak.findAll({
+                const topStreaks = await Streak.getAllCache({
                     where: { guildId },
                     order: [
                         ['currentStreak', 'DESC'],
                         ['highestStreak', 'DESC'],
                     ],
                     limit: 10,
+                    cacheTags: [`Streak:leaderboard`],
                 });
 
                 if (topStreaks.length === 0) {
@@ -275,11 +276,17 @@ module.exports = {
                 const total = await Streak.count({ where: { guildId } });
                 const maxStreak = (await Streak.max('highestStreak', { where: { guildId } })) || 0;
 
-                const avgStreak = await Streak.findAll({
-                    where: { guildId },
-                    attributes: [[Streak.sequelize.fn('AVG', Streak.sequelize.col('currentStreak')), 'avgStreak']],
-                    raw: true,
-                });
+                const avgStreak = await Streak.aggregateWithCache(
+                    {
+                        where: { guildId },
+                        attributes: [[Streak.sequelize.fn('AVG', Streak.sequelize.col('currentStreak')), 'avgStreak']],
+                        raw: true,
+                    },
+                    {
+                        cacheTags: [`Streak:avg:byGuild:${guildId}`],
+                    }
+                );
+
                 const avg = avgStreak[0] && avgStreak[0].avgStreak ? Number(avgStreak[0].avgStreak).toFixed(2) : '0';
 
                 const activeStreaks = await Streak.count({
