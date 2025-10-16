@@ -24,9 +24,9 @@ module.exports = function kythiaClient() {
             GuildMemberManager: {
                 max: 100,
                 keepOverLimit: (member) =>
-                    (client.user && member.id === client.user.id)
-                    || member.id === member.guild.ownerId
-                    || member.voice.channelId !== null,
+                    (client.user && member.id === client.user.id) ||
+                    (member.guild && member.id === member.guild.ownerId) ||
+                    (member.voice && member.voice.channelId !== null),
             },
             ThreadManager: 10,
         }),
@@ -44,7 +44,7 @@ module.exports = function kythiaClient() {
             },
             users: {
                 interval: 3600,
-                filter: (user) => !user.bot,
+                filter: (user) => user && !user.bot,
             },
         },
     });
