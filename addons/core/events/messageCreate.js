@@ -33,7 +33,10 @@ const moment = require('moment');
 module.exports = async (bot, message) => {
     const client = bot.client;
 
-    const matchedPrefix = kythia.bot.prefixes.find((prefix) => message.content.startsWith(prefix));
+    const contentLower = message.content.toLowerCase();
+    const matchedPrefix = kythia.bot.prefixes.find((prefix) =>
+        contentLower.startsWith(prefix.toLowerCase())
+    );
     if (matchedPrefix) {
         if (message.author?.bot) return;
 
