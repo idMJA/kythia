@@ -15,7 +15,6 @@ class InventoryAdventure extends KythiaModel {
         super.init(
             {
                 id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-                guildId: { type: DataTypes.STRING, allowNull: false },
                 userId: { type: DataTypes.STRING, allowNull: false },
                 itemName: { type: DataTypes.STRING, allowNull: false },
                 quantity: { type: DataTypes.INTEGER, defaultValue: 1, allowNull: false },

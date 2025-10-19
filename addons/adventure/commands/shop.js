@@ -24,10 +24,9 @@ module.exports = {
                 fr: '🛒 Achète des objets à la boutique !',
                 ja: '🛒 ショップでアイテムを買おう！',
             }),
-    guildOnly: true,
     async execute(interaction) {
         await interaction.deferReply();
-        const user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        const user = await User.getCache({ userId: interaction.user.id });
 
         if (!user) {
             const embed = new EmbedBuilder()
@@ -159,11 +158,7 @@ module.exports = {
                         user.gold -= selectedItem.price;
                         await user.saveAndUpdateCache();
 
-                        await Inventory.create({
-                            guildId: user.guildId,
-                            userId: user.userId,
-                            itemName: selectedItem.name,
-                        });
+                        await Inventory.create({ userId: user.userId, itemName: selectedItem.name });
                         await Inventory.clearCache({ userId: user.userId });
 
                         const successEmbed = new EmbedBuilder()

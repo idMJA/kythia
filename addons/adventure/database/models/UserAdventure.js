@@ -14,7 +14,6 @@ class UserAdventure extends KythiaModel {
     static init(sequelize) {
         super.init(
             {
-                guildId: { type: DataTypes.STRING, allowNull: false },
                 userId: { type: DataTypes.STRING, allowNull: false },
                 level: { type: DataTypes.INTEGER, defaultValue: 1 },
                 xp: { type: DataTypes.INTEGER, defaultValue: 0 },

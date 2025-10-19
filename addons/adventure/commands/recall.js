@@ -18,10 +18,9 @@ module.exports = {
             .setNameLocalizations({ id: 'kembali', fr: 'retour', ja: 'リコール' })
             .setDescription('🏙️ Get back to the city!')
             .setDescriptionLocalizations({ id: '🏙️ kembali ke kota', fr: '🏙️ Retourne en ville !', ja: '🏙️ 街へ戻ろう！' }),
-    guildOnly: true,
     async execute(interaction) {
         await interaction.deferReply();
-        const user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        const user = await User.getCache({ userId: interaction.user.id });
 
         if (!user) {
             const embed = new EmbedBuilder().setColor('Red').setDescription(await t(interaction, 'adventure_no_character'));

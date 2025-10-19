@@ -23,13 +23,10 @@ module.exports = {
                 fr: '🎒 Ton inventaire',
                 ja: '🎒 所持品を確認しよう',
             }),
-    guildOnly: true,
     async execute(interaction) {
         await interaction.deferReply();
         const userId = interaction.user.id;
-        const guildId = interaction.guild.id;
-
-        const user = await User.getCache({ userId: userId, guildId: guildId });
+        const user = await User.getCache({ userId: userId });
         if (!user) {
             const embed = new EmbedBuilder()
                 .setColor('Red')

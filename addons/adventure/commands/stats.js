@@ -22,10 +22,9 @@ module.exports = {
                 fr: "📑 Tes statistiques d'aventure",
                 ja: '📑 冒険のステータスを確認しよう',
             }),
-    guildOnly: true,
     async execute(interaction) {
         await interaction.deferReply();
-        const user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        const user = await User.getCache({ userId: interaction.user.id });
 
         if (!user) {
             const embed = new EmbedBuilder()

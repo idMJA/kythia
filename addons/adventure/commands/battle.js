@@ -24,12 +24,10 @@ module.exports = {
                 fr: '⚔️ Combats un monstre dans le donjon !',
                 ja: '⚔️ ダンジョンでモンスターと戦おう！',
             }),
-    guildOnly: true,
     // permissions: PermissionFlagsBits.ManageGuild,
     async execute(interaction, container) {
         await interaction.deferReply();
-        const user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
-        const guildId = interaction.guild.id;
+        const user = await User.getCache({ userId: interaction.user.id });
         const userId = interaction.user.id;
         if (!user) {
             const embed = new EmbedBuilder()
@@ -86,11 +84,7 @@ module.exports = {
                     user.hp = userMaxHp;
                     await user.saveAndUpdateCache();
                     await revival.destroy();
-                    await Inventory.clearCache({
-                        guildId: user.guildId,
-                        userId: user.userId,
-                        itemName: '🍶 Revival',
-                    });
+                    await Inventory.clearCache({ userId: user.userId, itemName: '🍶 Revival' });
                     return {
                         embeds: [
                             embed
@@ -241,10 +235,10 @@ module.exports = {
         }
 
         const items = await Inventory.getCache([
-            { guildId: guildId, userId: userId, itemName: '⚔️ Sword' },
-            { guildId: guildId, userId: userId, itemName: '🛡️ Shield' },
-            { guildId: guildId, userId: userId, itemName: '🥋 Armor' },
-            { guildId: guildId, userId: userId, itemName: '🍶 Revival' },
+            { userId: userId, itemName: '⚔️ Sword' },
+            { userId: userId, itemName: '🛡️ Shield' },
+            { userId: userId, itemName: '🥋 Armor' },
+            { userId: userId, itemName: '🍶 Revival' },
         ]);
 
         // First round
@@ -268,12 +262,12 @@ module.exports = {
             await i.deferUpdate();
 
             // Re-fetch user and items for up-to-date stats
-            const freshUser = await User.getCache({ guildId, userId });
+            const freshUser = await User.getCache({ userId });
             const freshItems = await Inventory.getCache([
-                { guildId: guildId, userId: userId, itemName: '⚔️ Sword' },
-                { guildId: guildId, userId: userId, itemName: '🛡️ Shield' },
-                { guildId: guildId, userId: userId, itemName: '🥋 Armor' },
-                { guildId: guildId, userId: userId, itemName: '🍶 Revival' },
+                { userId: userId, itemName: '⚔️ Sword' },
+                { userId: userId, itemName: '🛡️ Shield' },
+                { userId: userId, itemName: '🥋 Armor' },
+                { userId: userId, itemName: '🍶 Revival' },
             ]);
 
             const nextResult = await handleBattleRound(i, freshUser, freshItems);

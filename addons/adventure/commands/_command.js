@@ -8,7 +8,7 @@
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 
 module.exports = {
-    guildOnly: true,
+    guildOnly: false,
     data: new SlashCommandBuilder()
         .setName('adventure')
         .setNameLocalizations({
@@ -21,6 +21,5 @@ module.exports = {
             id: '⚔️ Mulai petualanganmu di dimensi RPG!',
             fr: '⚔️ Commence ton aventure dans la dimension RPG !',
             ja: '⚔️ RPGの世界で冒険を始めよう！',
-        })
-        .setContexts(InteractionContextType.Guild),
+        }),
 };

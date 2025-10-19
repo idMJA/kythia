@@ -22,10 +22,9 @@ module.exports = {
                 fr: '🛩️ Commence ton aventure maintenant !',
                 ja: '🛩️ 今すぐ冒険を始めよう！',
             }),
-    guildOnly: true,
     async execute(interaction) {
         await interaction.deferReply();
-        const user = await User.getCache({ userId: interaction.user.id, guildId: interaction.guild.id });
+        const user = await User.getCache({ userId: interaction.user.id });
 
         if (user) {
             const alreadyEmbed = new EmbedBuilder()
@@ -37,7 +36,6 @@ module.exports = {
         }
 
         await User.create({
-            guildId: interaction.guild.id,
             userId: interaction.user.id,
             level: 1,
             xp: 0,
