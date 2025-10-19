@@ -44,7 +44,13 @@ module.exports = async (bot, message) => {
         const args = contentAfterPrefix.split(/ +/);
         const commandName = args.shift().toLowerCase();
 
-        const baseCommand = client.commands.get(commandName);
+        // Command lookup: main, then alias.
+        let baseCommand =
+            client.commands.get(commandName) ||
+            [...client.commands.values()].find(
+                (cmd) => Array.isArray(cmd.aliases) && cmd.aliases.map(a => a.toLowerCase()).includes(commandName)
+            );
+
         if (!baseCommand) return;
 
         const remainingArgsString = args.join(' ');
@@ -53,11 +59,24 @@ module.exports = async (bot, message) => {
         const subcommand = fakeInteraction.options.getSubcommand();
         const subcommandGroup = fakeInteraction.options.getSubcommandGroup();
 
+        // Final command key: look for subcommand/subgroup form first (in case mapped as an explicit key)
         let finalCommandKey = commandName;
         if (subcommandGroup) finalCommandKey = `${commandName} ${subcommandGroup} ${subcommand}`;
         else if (subcommand) finalCommandKey = `${commandName} ${subcommand}`;
+        
+        // Try the key directly, or fall back to baseCommand
+        let finalCommand =
+            client.commands.get(finalCommandKey) ||
+            // Try to resolve the alias form as well for subcommands
+            [...client.commands.values()].find(
+                (cmd) =>
+                    Array.isArray(cmd.aliases) &&
+                    (cmd.aliases.map(a => a.toLowerCase()).includes(finalCommandKey) ||
+                     cmd.aliases.map(a => a.toLowerCase()).includes(commandName))
+            ) ||
+            baseCommand;
 
-        const finalCommand = client.commands.get(finalCommandKey) || baseCommand;
+        if (!finalCommand) return;
 
         if (finalCommand.guildOnly && !message.guild) return;
 
@@ -101,20 +120,20 @@ module.exports = async (bot, message) => {
             }
         }
         if (finalCommand.voteLocked && !isOwner(message.author.id)) {
-            const voter = await KythiaVoter.getCache({ userId: interaction.user.id });
+            const voter = await KythiaVoter.getCache({ userId: message.author.id });
 
             const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
             if (!voter || voter.votedAt < twelveHoursAgo) {
                 const container = new ContainerBuilder().setAccentColor(convertColor(kythia.bot.color, { from: 'hex', to: 'decimal' }));
-                container.addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'common_error_vote_locked')));
+                container.addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(message, 'common_error_vote_locked')));
                 container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
                 container.addActionRowComponents(
                     new ActionRowBuilder().addComponents(
                         new ButtonBuilder()
                             .setLabel(
-                                await t(interaction, 'common_error_vote_locked_button', {
-                                    botName: interaction.client.user.username,
+                                await t(message, 'common_error_vote_locked_button', {
+                                    botName: message.client.user.username,
                                 })
                             )
                             .setStyle(ButtonStyle.Link)

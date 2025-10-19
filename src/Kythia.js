@@ -86,6 +86,7 @@ class Kythia {
             logger: logger,
             User: User,
             t: t,
+            redis: null,
         };
 
         this.client.container = this.container;
@@ -1834,7 +1835,7 @@ class Kythia {
 
             // 1. Inisialisasi Redis DULU
             logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Initialize Cache ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
-            KythiaModel.initialize(kythia.db.redis);
+            this.container.redis = KythiaModel.initialize(kythia.db.redis);
 
             // 2. Load SEMUA Addons. Di sini `readyHooks` akan diisi.
             logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Kythia Addons ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');

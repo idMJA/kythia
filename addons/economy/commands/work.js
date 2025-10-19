@@ -16,6 +16,7 @@ const jobs = require('../helpers/jobs');
 
 module.exports = {
     subcommand: true,
+    aliases: ['work'],
     data: (subcommand) => subcommand.setName('work').setDescription('⚒️ Work to earn money with various scenarios!'),
 
     async execute(interaction, container) {

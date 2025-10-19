@@ -111,27 +111,75 @@ async function getDbPing(container) {
     return { ping, status, error: errorMsg };
 }
 
+/**
+ * Get Redis ping/latency information (if configured)
+ * @param {object} container - The bot's container
+ * @returns {Promise<{ping: number, status: string, error?: string}>}
+ */
+async function getRedisPing(container) {
+    // Try multiple common redis client locations (for flexibility)
+    // Must be a client compatible with .ping() that returns a latency in ms or a promise of 'PONG'
+    const redis = container.redis || container.cache || container.redisClient || null;
+    if (!redis) {
+        return { ping: -1, status: 'not_configured' };
+    }
+    let ping = -1;
+    let status = 'unknown';
+    let errorMsg = undefined;
+    try {
+        const start = Date.now();
+        // Try modern ioredis and node-redis both
+        let pong;
+        if (typeof redis.ping === 'function') {
+            pong = await redis.ping();
+        }
+        // pong is sometimes 'PONG' or sometimes a number (latency)
+        ping = Date.now() - start;
+        // node-redis ping returns 'PONG', ioredis may echo latency, so just use duration
+        if (pong !== undefined) {
+            status = 'connected';
+        } else {
+            status = 'not_supported';
+        }
+    } catch (err) {
+        status = 'error';
+        errorMsg = err.message || String(err);
+    }
+    return { ping, status, error: errorMsg };
+}
+
 async function buildPingEmbed(interaction, container) {
     const botLatency = Math.max(0, Date.now() - interaction.createdTimestamp);
     const apiLatency = Math.round(interaction.client.ws.ping);
     const lavalinkNodes = await getLavalinkNodesPing(interaction.client);
     const dbPingInfo = await getDbPing(container);
+    const redisPingInfo = await getRedisPing(container);
 
     const embedContainer = new ContainerBuilder().setAccentColor(convertColor(kythia.bot.color, { from: 'hex', to: 'decimal' }));
 
     embedContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'core_utils_ping_embed_title')));
     embedContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
 
+    // Bot latency
     embedContainer.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(`**${await t(interaction, 'core_utils_ping_field_bot_latency')}**\n\`\`\`${botLatency}ms\`\`\``)
     );
+    // API latency
     embedContainer.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(`**${await t(interaction, 'core_utils_ping_field_api_latency')}**\n\`\`\`${apiLatency}ms\`\`\``)
     );
+    // DB ping
     embedContainer.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
             `**${await t(interaction, 'core_utils_ping_field_db_latency')}**\n\`\`\`${dbPingInfo.status === 'connected' ? dbPingInfo.ping + 'ms' : dbPingInfo.status === 'not_configured' ? 'Not Configured' : dbPingInfo.status === 'error' ? 'Error' : 'Unknown'}\`\`\`` +
                 (dbPingInfo.status === 'error' && dbPingInfo.error ? `\n\`\`\`Error: ${dbPingInfo.error}\`\`\`` : '')
+        )
+    );
+    // Redis ping
+    embedContainer.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `**${await t(interaction, 'core_utils_ping_field_redis_latency')}**\n\`\`\`${redisPingInfo.status === 'connected' ? redisPingInfo.ping + 'ms' : redisPingInfo.status === 'not_configured' ? 'Not Configured' : redisPingInfo.status === 'not_supported' ? 'Not Supported' : redisPingInfo.status === 'error' ? 'Error' : 'Unknown'}\`\`\`` +
+                (redisPingInfo.status === 'error' && redisPingInfo.error ? `\n\`\`\`Error: ${redisPingInfo.error}\`\`\`` : '')
         )
     );
 
@@ -146,16 +194,16 @@ async function buildPingEmbed(interaction, container) {
             let pingText = 'N/A';
 
             if (node.status === 'operational') {
-                statusEmoji = '🟢';
+                statusEmoji = '`🟢`';
                 pingText = `${node.ping}ms`;
             } else if (node.status === 'no_stats') {
-                statusEmoji = '🟡';
+                statusEmoji = '`🟡`';
                 pingText = 'Stats OK, Ping Data Missing';
             } else if (node.status === 'disconnected') {
-                statusEmoji = '🔴';
+                statusEmoji = '`🔴`';
                 pingText = 'Disconnected';
             } else if (node.status === 'error') {
-                statusEmoji = '❌';
+                statusEmoji = '`❌`';
                 pingText = 'Error';
             }
 
@@ -181,11 +229,11 @@ async function buildPingEmbed(interaction, container) {
         new TextDisplayBuilder().setContent(await t(interaction, 'common_container_footer', { username: interaction.client.user.username }))
     );
 
-    return { embedContainer, botLatency, apiLatency, lavalinkNodes, dbPingInfo };
+    return { embedContainer, botLatency, apiLatency, lavalinkNodes, dbPingInfo, redisPingInfo };
 }
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('ping').setDescription("🔍 Checks the bot's, Discord API's, and database connection speed."),
+    data: new SlashCommandBuilder().setName('ping').setDescription("🔍 Checks the bot's, Discord API's, database and cache/redis connection speed."),
     aliases: ['p', 'pong'],
     async execute(interaction, container) {
         const { embedContainer, botLatency, apiLatency } = await buildPingEmbed(interaction, container);

@@ -13,6 +13,7 @@ const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
+    aliases: ['bank'],
     data: (subcommand) => subcommand.setName('bank').setDescription('💰 Check your kythia bank balance and full bank info.'),
     async execute(interaction) {
         await interaction.deferReply();

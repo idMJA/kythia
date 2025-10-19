@@ -15,6 +15,7 @@ const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
+    aliases: ['lootbox'],
     data: (subcommand) => subcommand.setName('lootbox').setDescription('🎁 Open a lootbox to get a random reward.'),
     async execute(interaction) {
         await interaction.deferReply();

@@ -14,6 +14,7 @@ const BankManager = require('../helpers/bankManager');
 
 module.exports = {
     subcommand: true,
+    aliases: ['daily'],
     data: (subcommand) => subcommand.setName('daily').setDescription('💰 Collect your daily kythia coin.'),
     async execute(interaction) {
         await interaction.deferReply();
