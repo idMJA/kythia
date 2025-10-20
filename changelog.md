@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.9-beta-rc.5](https://github.com/kythia/kythia/compare/v0.9.9-beta-rc.4...v0.9.9-beta-rc.5) (2025-10-20)
+
+
+### 🔧 Changed
+
+* make adventure commands globally ([1e791a7](https://github.com/kythia/kythia/commit/1e791a741bb172b6f1d110a581bcc7a242d7a7ad))
+* rename User and Inventory models for consistency and update battle command logic to enhance item usage and user stats management ([5006259](https://github.com/kythia/kythia/commit/500625967bf17dfc124a78f3e48dd15d52bb568c))
+* update marriage handling to use getAllCache for improved data retrieval and error handling ([9477bbd](https://github.com/kythia/kythia/commit/9477bbdd07e22f44cfb1c9f9bdeeb6b3069b179e))
+
+
+### ✨ Added
+
+* add message for no listeners in voice channel to music manager ([1ef6997](https://github.com/kythia/kythia/commit/1ef6997963514a454d6f1fa689cb4cff573f7e3f))
+* add Redis ping functionality to the ping command and improve command alias handling ([7358709](https://github.com/kythia/kythia/commit/73587096c55b1163b5bb264306bdad6488b824fa))
+* add short message threshold to automod settings and improve message handling efficiency ([c6f872e](https://github.com/kythia/kythia/commit/c6f872efecc04356ab84989ea788ad3c7dc75ea6))
+* free image host like imgur, catbox etc ([0e0de5f](https://github.com/kythia/kythia/commit/0e0de5fcdaf5ac8574f88edec35ab87a886a7fcc))
+* implement character selection and bonuses in adventure commands ([b919771](https://github.com/kythia/kythia/commit/b919771955c01d4996023682e287811490ce45e6))
+
 ### [0.9.9-beta-rc.4](https://github.com/kythia/kythia/compare/v0.9.9-beta-rc.3...v0.9.9-beta-rc.4) (2025-10-18)
 
 
