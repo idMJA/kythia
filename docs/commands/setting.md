@@ -30,14 +30,6 @@
 `/set welcome out-text <text>`
 `/set welcome in-background <background>`
 `/set welcome out-background <background>`
-`/set cooldown daily <cooldown>`
-`/set cooldown beg <cooldown>`
-`/set cooldown lootbox <cooldown>`
-`/set cooldown work <cooldown>`
-`/set cooldown rob <cooldown>`
-`/set cooldown hack <cooldown>`
-`/set cooldown pet <cooldown>`
-`/set cooldown gacha <cooldown>`
 `/set leveling channel <channel>`
 `/set leveling cooldown <cooldown>`
 `/set leveling xp <xp>`
@@ -59,6 +51,8 @@
 `/set ai list`
 `/set channels announcement <channel>`
 `/set channels invite <channel>`
+`/set booster channel <channel>`
+`/set booster message <message>`
 `/set streak-settings minimum <minimum>`
 `/set streak-settings emoji <emoji>`
 `/set raw set <field> <value>`
@@ -78,6 +72,7 @@
 `/set features streak <status>`
 `/set features invites <status>`
 `/set features role-prefix <status>`
+`/set features boost-log <status>`
 
 ### 🔧 Subcommands
 
@@ -263,62 +258,6 @@
 - **`background*`**
   - **Description:** Background for welcome out
   - **Type:** Text
-**`/set cooldown daily <cooldown>`**
-> ⏳ Set daily cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown beg <cooldown>`**
-> ⏳ Set beg cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown lootbox <cooldown>`**
-> ⏳ Set lootbox cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown work <cooldown>`**
-> ⏳ Set work cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown rob <cooldown>`**
-> ⏳ Set rob cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown hack <cooldown>`**
-> ⏳Set hack cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown pet <cooldown>`**
-> ⏳ Set pet cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
-**`/set cooldown gacha <cooldown>`**
-> ⏳ Set gacha cooldown
-
-**Options for this subcommand:**
-- **`cooldown*`**
-  - **Description:** Cooldown in seconds
-  - **Type:** Integer
 **`/set leveling channel <channel>`**
 > 🎮 Set channel for level up messages
 
@@ -467,6 +406,20 @@
 - **`channel*`**
   - **Description:** Channel
   - **Type:** Channel
+**`/set booster channel <channel>`**
+> 🚀 Set boost log channel
+
+**Options for this subcommand:**
+- **`channel*`**
+  - **Description:** Channel for boost logs
+  - **Type:** Channel
+**`/set booster message <message>`**
+> 🚀 Set boost log message
+
+**Options for this subcommand:**
+- **`message*`**
+  - **Description:** Custom message for boost logs (use placeholders like {username}, {displayName})
+  - **Type:** Text
 **`/set streak-settings minimum <minimum>`**
 > 🔥 Set minimum streak
 
@@ -615,6 +568,14 @@
   - **Choices:** `Enable` (`enable`), `Disable` (`disable`)
 **`/set features role-prefix <status>`**
 > Enable or disable the Role Prefix feature
+
+**Options for this subcommand:**
+- **`status*`**
+  - **Description:** Select status
+  - **Type:** Text
+  - **Choices:** `Enable` (`enable`), `Disable` (`disable`)
+**`/set features boost-log <status>`**
+> Enable or disable the Boost Log feature
 
 **Options for this subcommand:**
 - **`status*`**

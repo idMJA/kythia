@@ -8,10 +8,11 @@
 
 `/adventure battle`
 `/adventure inventory`
+`/adventure profile`
 `/adventure recall`
-`/adventure shop`
-`/adventure start`
-`/adventure stats`
+`/adventure shop [category]`
+`/adventure start <character>`
+`/adventure use`
 
 ### 🔧 Subcommands
 
@@ -23,20 +24,32 @@
 > 🎒 Look at your inventory
 
 
+**`/adventure profile`**
+> 📑 Look at your Adventure stats
+
+
 **`/adventure recall`**
 > 🏙️ Get back to the city!
 
 
-**`/adventure shop`**
-> 🛒 Buy items from the shop!
+**`/adventure shop [<category>]`**
+> 🛒 Buy items from the adventure shop!
 
-
-**`/adventure start`**
+**Options for this subcommand:**
+- **`category`**
+  - **Description:** The category of items to show
+  - **Type:** Text
+  - **Choices:** `All` (`all`), `Equipment` (`equipment`), `Consumables` (`consumables`)
+**`/adventure start <character>`**
 > 🛩️ Start your journey now!
 
-
-**`/adventure stats`**
-> 📑 Look at your Adventure stats
+**Options for this subcommand:**
+- **`character*`**
+  - **Description:** Choose your starting character!
+  - **Type:** Text
+  - **Choices:** `🗡️ Elara` (`shadow_blade`), `🛡️ Kaelen` (`iron_guardian`), `⚡ Lyra` (`stormcaller`), `🏹 Arion` (`gilded_ranger`), `🧘 Sora` (`aurora_monk`)
+**`/adventure use`**
+> Use an item from your inventory
 
 
 

@@ -8,13 +8,14 @@
 
 `/eco bank`
 `/eco beg`
-`/eco cash`
+`/eco coin`
 `/eco coinflip <bet> <side>`
 `/eco daily`
 `/eco deposit <type> [amount]`
 `/eco give <target> <amount>`
 `/eco hack <target>`
 `/eco inventory`
+`/eco leaderboard`
 `/eco lootbox`
 `/eco profile [user]`
 `/eco rob <target>`
@@ -27,15 +28,15 @@
 ### 🔧 Subcommands
 
 **`/eco bank`**
-> 💰 Check your bank balance.
+> 💰 Check your kythia bank balance and full bank info.
 
 
 **`/eco beg`**
 > 💰 Ask for money from server.
 
 
-**`/eco cash`**
-> 💰 Check your cash balance.
+**`/eco coin`**
+> 💰 Check your kythia coin balance.
 
 
 **`/eco coinflip <bet> <side>`**
@@ -50,11 +51,11 @@
   - **Type:** Text
   - **Choices:** `Heads` (`heads`), `Tails` (`tails`)
 **`/eco daily`**
-> 💰 Collect your daily cash.
+> 💰 Collect your daily kythia coin.
 
 
 **`/eco deposit <type> [<amount>]`**
-> 💰 Deposit your cash into the bank.
+> 💰 Deposit your kythia coin into kythia bank.
 
 **Options for this subcommand:**
 - **`type*`**
@@ -65,14 +66,14 @@
   - **Description:** Amount to deposit
   - **Type:** Integer
 **`/eco give <target> <amount>`**
-> 💰 Give cash to another user.
+> 💰 Give kythia coin to another user.
 
 **Options for this subcommand:**
 - **`target*`**
-  - **Description:** User to give cash to
+  - **Description:** User to give kythia coin to
   - **Type:** User
 - **`amount*`**
-  - **Description:** Amount of cash to give
+  - **Description:** Amount of kythia coin to give
   - **Type:** Integer
 **`/eco hack <target>`**
 > 💵 Hack another user.
@@ -83,6 +84,10 @@
   - **Type:** User
 **`/eco inventory`**
 > 🛄 View all items in your inventory.
+
+
+**`/eco leaderboard`**
+> 🏆 View the global economy leaderboard.
 
 
 **`/eco lootbox`**
@@ -125,7 +130,7 @@
   - **Description:** Amount of money to transfer
   - **Type:** Integer
 **`/eco withdraw <amount>`**
-> Withdraw your cash from the bank.
+> Withdraw your kythia coin from kythia bank.
 
 **Options for this subcommand:**
 - **`amount*`**

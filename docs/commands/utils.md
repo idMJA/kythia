@@ -176,7 +176,7 @@
 
 ### 💾 `/ping`
 
-**Description:** 🔍 Checks the bot's, Discord API's, and database connection speed.
+**Description:** 🔍 Checks the bot's, Discord API's, database and cache/redis connection speed.
 
 ### 💻 Usage
 

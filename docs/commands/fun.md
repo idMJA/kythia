@@ -15,6 +15,40 @@
   - **Type:** Text
 
 
+### 💾 `/marry`
+
+**Description:** 💍 Marriage system commands
+
+### 💻 Usage
+
+`/marry propose <user>`
+`/marry divorce`
+`/marry kiss`
+`/marry profile`
+
+### 🔧 Subcommands
+
+**`/marry propose <user>`**
+> 💍 Propose to another user
+
+**Options for this subcommand:**
+- **`user*`**
+  - **Description:** The user you want to propose to
+  - **Type:** User
+**`/marry divorce`**
+> 💔 End your current marriage
+
+
+**`/marry kiss`**
+> 😘 Kiss your partner
+
+
+**`/marry profile`**
+> 👰 View your marriage profile
+
+
+
+
 ### 💾 `/tictactoe`
 
 **Description:** ⭕ Play Tic Tac Toe with a friend or bot.
