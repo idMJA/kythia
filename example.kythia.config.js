@@ -218,6 +218,7 @@ function loadKythiaConfig() {
                 enabled: true,
                 apiUrl: process.env.GLOBAL_CHAT_API_URL || 'http://localhost:2000',
                 healthCheckSchedule: '*/30 * * * *',
+                healthCheckDelay: 1000,
             },
             invite: {
                 active: true,

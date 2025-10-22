@@ -22,25 +22,29 @@ async function handleFailedGlobalChat(failedGuilds, container) {
 
     logger.info(`🌏 [GlobalChat] Starting webhook fix process for ${failedGuilds.length} failed guild(s)...`);
 
+    let allGuildsData;
+    try {
+        logger.info('🌏 [GlobalChat] Fetching master guild list from API...');
+        const listResponse = await fetch(`${apiUrl}/list`);
+        if (!listResponse.ok) throw new Error(`API /list returned status ${listResponse.status}`);
+
+        const listData = await listResponse.json();
+        if (listData.status !== 'ok' || !listData.data?.guilds) {
+            throw new Error(`API /list failed or returned invalid data: ${listData.message || listData.error || 'Unknown error'}`);
+        }
+        allGuildsData = listData.data.guilds;
+    } catch (listError) {
+        logger.error(`❌ [GlobalChat] Error fetching master /list. Aborting fix process.`, listError.message);
+        return;
+    }
+
     for (const failedGuild of failedGuilds) {
         logger.warn(`⚠️ [GlobalChat] Handling failed guild: ${failedGuild.guildName || failedGuild.guildId}. Reason: ${failedGuild.error}`);
 
         try {
             logger.info(`🌏 [GlobalChat] Attempting to fix webhook for guild ${failedGuild.guildName || failedGuild.guildId}`);
 
-            let guildInfo;
-            try {
-                const listResponse = await fetch(`${apiUrl}/list`);
-                if (!listResponse.ok) throw new Error(`API /list returned status ${listResponse.status}`);
-                const listData = await listResponse.json();
-                if (listData.status !== 'ok' || !listData.data?.guilds) {
-                    throw new Error(`API /list failed or returned invalid data: ${listData.message || listData.error || 'Unknown error'}`);
-                }
-                guildInfo = listData.data.guilds.find((g) => g.id === failedGuild.guildId);
-            } catch (listError) {
-                logger.error(`❌ [GlobalChat] Error fetching /list to get channel for guild ${failedGuild.guildId}:`, listError.message);
-                continue;
-            }
+            const guildInfo = allGuildsData.find((g) => g.id === failedGuild.guildId);
 
             if (!guildInfo || !guildInfo.globalChannelId) {
                 logger.warn(

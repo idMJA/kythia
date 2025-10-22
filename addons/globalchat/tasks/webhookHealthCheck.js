@@ -11,6 +11,15 @@ const cron = require('node-cron');
 const { handleFailedGlobalChat } = require('../helpers/handleFailedGlobalChat');
 
 /**
+ * Sleep for ms milliseconds
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Initializes the webhook health check task for Global Chat
  * Runs every 6 hours to proactively check webhook health
  * @param {object} bot - The bot instance with client, logger, container
@@ -22,6 +31,7 @@ function initializeWebhookHealthCheck(bot) {
 
     const schedule = kythia.addons.globalchat.healthCheckSchedule || '0 */1 * * *';
 
+    const checkDelayMs = kythia.addons.globalchat.healthCheckDelay || 1000;
     logger.info(`🌏 [GlobalChat] Initializing webhook health check task with schedule: ${schedule}`);
 
     cron.schedule(
@@ -69,6 +79,8 @@ function initializeWebhookHealthCheck(bot) {
                 } catch (fetchError) {
                     logger.error(`❌ [GlobalChat-Cron] Error checking webhook for guild ${guildInfo.id}:`, fetchError);
                 }
+
+                await sleep(checkDelayMs);
             }
             logger.info('🌏 [GlobalChat] Proactive webhook health check finished.');
         },
