@@ -116,6 +116,18 @@
                             </select>
                             <div class="form-text">Channel where moderation actions will be logged</div>
                         </div>
+                        <div class="mb-3">
+                            <label for="auditLogChannelId" class="form-label">Audit Log Channel</label>
+                            <select class="form-select select2 glass-effect" id="auditLogChannelId" name="auditLogChannelId">
+                                <option value="">Select a channel...</option>
+                                <% channels.text.forEach(channel => { %>
+                                    <option value="<%= channel.id %>" <%= settings.auditLogChannelId === channel.id ? 'selected' : '' %>>
+                                        #<%= channel.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <!-- <div class="form-text">Channel where actions will be logged</div> -->
+                        </div>
                     </div>
                 </div>
             </div>

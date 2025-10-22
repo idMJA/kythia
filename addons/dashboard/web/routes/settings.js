@@ -267,6 +267,7 @@ router.post('/dashboard/:guildId/settings/automod', isAuthorized, checkServerAcc
         settings.antiMentionOn = body.antiMentionOn === 'on';
 
         if (body.modLogChannelId) settings.modLogChannelId = body.modLogChannelId;
+        if (body.auditLogChannelId) settings.auditLogChannelId = body.auditLogChannelId;
 
         if (body.whitelist !== undefined) {
             const arr = Array.isArray(body.whitelist) ? body.whitelist : [body.whitelist];

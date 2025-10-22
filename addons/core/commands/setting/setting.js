@@ -151,9 +151,15 @@ const command = new SlashCommandBuilder()
             )
             .addSubcommand((sub) =>
                 sub
-                    .setName('log-channel')
+                    .setName('mod-log-channel')
                     .setDescription('🔄 Channel to be used for automod logs')
                     .addChannelOption((opt) => opt.setName('channel').setDescription('Select channel for automod logs').setRequired(true))
+            )
+            .addSubcommand((sub) =>
+                sub
+                    .setName('audit-log-channel')
+                    .setDescription('🔄 Channel to be used for audit logs')
+                    .addChannelOption((opt) => opt.setName('channel').setDescription('Select channel for audit logs').setRequired(true))
             )
             .addSubcommand((sub) => sub.setName('badwords-list').setDescription('View bad words list'))
             .addSubcommand((sub) => sub.setName('badwords-whitelist-list').setDescription('View bad words whitelist list'))
@@ -1131,7 +1137,7 @@ module.exports = {
                         embed.setDescription(await t(interaction, 'core_setting_setting_exception_channel_list', { list }));
                         return interaction.editReply({ embeds: [embed] });
                     }
-                    case 'log-channel': {
+                    case 'mod-log-channel': {
                         const targetChannel = channel;
                         if (!targetChannel.isTextBased()) {
                             embed.setDescription(await t(interaction, 'core_setting_setting_log_channel_invalid'));
@@ -1140,7 +1146,20 @@ module.exports = {
                         serverSetting.modLogChannelId = targetChannel.id;
                         await serverSetting.saveAndUpdateCache('guildId');
                         embed.setDescription(
-                            await t(interaction, 'core_setting_setting_log_channel_set', { channel: `<#${targetChannel.id}>` })
+                            await t(interaction, 'core_setting_setting_mod_log_channel_set', { channel: `<#${targetChannel.id}>` })
+                        );
+                        return interaction.editReply({ embeds: [embed] });
+                    }
+                    case 'audit-log-channel': {
+                        const targetChannel = channel;
+                        if (!targetChannel.isTextBased()) {
+                            embed.setDescription(await t(interaction, 'core_setting_setting_log_channel_invalid'));
+                            return interaction.editReply({ embeds: [embed] });
+                        }
+                        serverSetting.auditLogChannelId = targetChannel.id;
+                        await serverSetting.saveAndUpdateCache('guildId');
+                        embed.setDescription(
+                            await t(interaction, 'core_setting_setting_audit_log_channel_set', { channel: `<#${targetChannel.id}>` })
                         );
                         return interaction.editReply({ embeds: [embed] });
                     }
