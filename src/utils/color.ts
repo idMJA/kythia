@@ -55,9 +55,11 @@ const discordColors = {
  * @param {{from:'hex'|'rgb'|'decimal'|'discord', to:'hex'|'rgb'|'decimal'}} options - Conversion options.
  * @returns {string|number|{r:number,g:number,b:number}} The converted color.
  */
-function convertColor(input, { from, to }) {
+import { ColorInput, ColorOutput, ConvertColorOptions } from '../types/color';
+
+function convertColor(input: ColorInput, { from, to }: ConvertColorOptions): ColorOutput {
     // Helper: hex to rgb
-    function hexToRgb(hex) {
+    function hexToRgb(hex: string) {
         let h = hex.replace(/^#/, '');
         if (h.length === 3) {
             h = h
@@ -199,4 +201,4 @@ function convertColor(input, { from, to }) {
     }
 }
 
-module.exports = convertColor;
+export default convertColor;

@@ -11,14 +11,30 @@
  * Manages event registration, execution order, and error handling for all events.
  */
 
-class EventManager {
+import { EventManager as IEventManager, EventHandler } from '../types/event-manager';
+import { KythiaClient } from '../KythiaClient';
+import { KythiaContainer } from '../types/kythia';
+
+class EventManager implements IEventManager {
+	client;
+	container;
+	eventHandlers;
+	logger;
     /**
      * 🏗️ EventManager Constructor
      * @param {Object} client - Discord client instance
      * @param {Object} container - Dependency container
      * @param {Map} eventHandlers - Event handlers map from AddonManager
      */
-    constructor({ client, container, eventHandlers }) {
+    constructor({
+	client,
+	container,
+	eventHandlers,
+}: {
+	client: KythiaClient;
+	container: KythiaContainer;
+	eventHandlers: Map<string, EventHandler[]>;
+}) {
         this.client = client;
         this.container = container;
         this.eventHandlers = eventHandlers;
@@ -56,7 +72,7 @@ class EventManager {
      * @param {string} eventName - Name of the event
      * @param {Function} handler - Handler function
      */
-    addEventHandler(eventName, handler) {
+    addEventHandler(eventName: string, handler: EventHandler) {
         if (!this.eventHandlers.has(eventName)) {
             this.eventHandlers.set(eventName, []);
         }
@@ -68,7 +84,7 @@ class EventManager {
      * @param {string} eventName - Name of the event
      * @param {Function} handler - Handler function to remove
      */
-    removeEventHandler(eventName, handler) {
+    removeEventHandler(eventName: string, handler: EventHandler) {
         if (this.eventHandlers.has(eventName)) {
             const handlers = this.eventHandlers.get(eventName);
             const index = handlers.indexOf(handler);
@@ -83,7 +99,7 @@ class EventManager {
      * @param {string} eventName - Name of the event
      * @returns {Array} Array of handlers
      */
-    getEventHandlers(eventName) {
+    getEventHandlers(eventName: string): EventHandler[] {
         return this.eventHandlers.get(eventName) || [];
     }
 
@@ -91,9 +107,9 @@ class EventManager {
      * Get all registered event types
      * @returns {Array} Array of event names
      */
-    getEventTypes() {
+    getEventTypes(): string[] {
         return Array.from(this.eventHandlers.keys());
     }
 }
 
-module.exports = EventManager;
+export default EventManager;

@@ -13,7 +13,9 @@
  * @param {string} text - Input text.
  * @returns {string} Converted text using tiny letters.
  */
-function toTinyText(text) {
+import { Formatter } from '../types/formatter';
+
+const toTinyText: Formatter = (text) => {
     const normal = 'abcdefghijklmnopqrstuvwxyz';
     const tiny = [
         'ᴀ',
@@ -62,7 +64,7 @@ function toTinyText(text) {
  * @param {string} text - Input text.
  * @returns {string} Converted text using bold tiny letters.
  */
-function toTinyBoldText(text) {
+const toTinyBoldText: Formatter = (text) => {
     const normal = 'abcdefghijklmnopqrstuvwxyz';
     const tinyBold = [
         '𝗮',

@@ -1,10 +1,12 @@
-// src/systems/AuditLogger.js
-const { Events, EmbedBuilder, AuditLogEvent, ChannelType } = require('discord.js');
-const ServerSetting = require('@coreModels/ServerSetting');
-const convertColor = require('./utils/color');
+import { Events, EmbedBuilder, AuditLogEvent, ChannelType, GuildAuditLogsEntry, Guild } from 'discord.js';
+import ServerSetting from '@coreModels/ServerSetting';
+import convertColor from './utils/color';
+import { AuditLogger as IAuditLogger, LogData } from './types/kythia-audit';
+import IKythia from './Kythia';
 
-// Kamus untuk mengubah angka AuditLogEvent menjadi nama (string)
-const auditLogEventNames = Object.fromEntries(Object.entries(AuditLogEvent).map(([key, value]) => [value, key]));
+const auditLogEventNames: Record<number, string> = Object.fromEntries(
+	Object.entries(AuditLogEvent).map(([key, value]) => [value, key])
+);
 
 // Human readable channel types
 const channelTypeNames = {
@@ -74,11 +76,13 @@ function formatCache(obj) {
     return String(obj);
 }
 
-class AuditLogger {
+class AuditLogger implements IAuditLogger {
+	bot;
+	client;
     /**
      * @param {import("../Kythia")} bot Instance dari class utama Kythia
      */
-    constructor(bot) {
+    constructor(bot: IKythia) {
         this.bot = bot;
         this.client = bot.client;
     }
@@ -96,7 +100,7 @@ class AuditLogger {
      * @param {import("discord.js").GuildAuditLogsEntry} entry
      * @param {import("discord.js").Guild} guild
      */
-    async onAuditLogEntryCreate(entry, guild) {
+    async onAuditLogEntryCreate(entry: GuildAuditLogsEntry, guild: Guild) {
         try {
             const settings = await ServerSetting.getCache({ guildId: guild.id });
             if (!settings || !settings.auditLogChannelId) return;
@@ -141,9 +145,9 @@ class AuditLogger {
      * "Penerjemah" yang mengubah entry audit log menjadi data yang bisa dibaca.
      * @private
      */
-    _formatEntry(entry) {
+    _formatEntry(entry: GuildAuditLogsEntry): LogData {
         const { action, executor, target, reason, changes, extra } = entry;
-        const logData = { color: 'Default', description: '', fields: [] };
+        const logData: LogData = { color: 'Default', description: '', fields: [] };
 
         // Helper for role mentions
         const roleMention = (role) => (role && role.id ? `<@&${role.id}>` : formatCache(role));
@@ -162,7 +166,7 @@ class AuditLogger {
             create: convertColor('Green', { from: 'discord', to: 'decimal' }), // green
             update: convertColor('Blurple', { from: 'discord', to: 'decimal' }), // blurple
             delete: convertColor('Red', { from: 'discord', to: 'decimal' }), // red
-            default: convertColor(kythia.bot.color, { from: 'hex', to: 'decimal' }),
+            default: convertColor(this.bot.kythiaConfig.bot.color, { from: 'hex', to: 'decimal' }),
         };
 
         // Helper for field array
@@ -635,4 +639,4 @@ class AuditLogger {
     }
 }
 
-module.exports = AuditLogger;
+export default AuditLogger;

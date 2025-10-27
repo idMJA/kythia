@@ -17,78 +17,105 @@
  * - Manages dependencies through container pattern
  */
 
-const { REST, Routes, Collection } = require('discord.js');
-const KythiaModel = require('./database/KythiaModel');
-const KythiaORM = require('./database/KythiaORM');
-const KythiaClient = require('./KythiaClient');
-const loadFonts = require('./utils/fonts');
-const Sentry = require('@sentry/node');
-const figlet = require('figlet');
+import { REST, Routes, Collection, Client } from 'discord.js';
+import * as Sentry from '@sentry/node';
+import figlet from 'figlet';
 
-const InteractionManager = require('./managers/InteractionManager');
-const ShutdownManager = require('./managers/ShutdownManager');
-const AddonManager = require('./managers/AddonManager');
-const EventManager = require('./managers/EventManager');
+import IKythia, { CommandData, KythiaDependencies } from './types/kythia';
+import KythiaClient from './KythiaClient';
+import loadFonts from './utils/fonts';
 
-class Kythia {
-    /**
-     * 🏗️ Kythia Constructor
-     * Initializes the Discord client, REST API, and dependency container.
-     * Sets up manager instances (but doesn't start them yet).
-     */
-    constructor({ config, logger, redis, sequelize, translator, models, helpers, utils }) {
-        const missingDeps = [];
-        if (!config) missingDeps.push('config');
-        if (!logger) missingDeps.push('logger');
-        if (!translator) {
-            missingDeps.push('translator');
-        } else {
-            if (!translator.t) missingDeps.push('translator.t');
-            if (!translator.loadLocales) missingDeps.push('translator.loadLocales');
-        }
-        if (missingDeps.length > 0) {
-            console.error(`FATAL: Missing required dependencies: ${missingDeps.join(', ')}.`);
-            process.exit(1);
-        }
-        this.kythiaConfig = config;
+import InteractionManager from './managers/InteractionManager';
+import ShutdownManager from './managers/ShutdownManager';
+import AddonManager from './managers/AddonManager';
+import EventManager from './managers/EventManager';
+import KythiaORM from './database/KythiaORM';
 
-        this.client = KythiaClient();
-        this.client.commands = new Collection();
-        this.rest = new REST({ version: '10' }).setToken(this.kythiaConfig.bot.token);
+class Kythia implements IKythia {
+	kythiaConfig;
+	client;
+	rest;
+	models;
+	helpers;
+	utils;
+	redis;
+	sequelize;
+	logger;
+	translator;
+	container;
+	dbReadyHooks;
+	clientReadyHooks;
+	addonManager;
+	interactionManager;
+	eventManager;
+	shutdownManager;
+	dbDependencies;
 
-        this.models = models;
-        this.helpers = helpers;
-        this.utils = utils;
+	/**
+	 * 🏗️ Kythia Constructor
+	 * Initializes the Discord client, REST API, and dependency container.
+	 * Sets up manager instances (but doesn't start them yet).
+	 */
+	constructor({ config, logger, redis, sequelize, translator, models, helpers, utils }: KythiaDependencies) {
+		const missingDeps: string[] = [];
+		if (!config) missingDeps.push('config');
+		if (!logger) missingDeps.push('logger');
+		if (!translator) {
+			missingDeps.push('translator');
+		} else {
+			if (!translator.t) missingDeps.push('translator.t');
+			if (!translator.loadLocales) missingDeps.push('translator.loadLocales');
+		}
+		if (missingDeps.length > 0) {
+			console.error(`FATAL: Missing required dependencies: ${missingDeps.join(', ')}.`);
+			process.exit(1);
+		}
+		this.kythiaConfig = config;
 
-        this.redis = redis;
-        this.sequelize = sequelize;
+		this.client = KythiaClient();
+		this.client.commands = new Collection();
+		this.rest = new REST({ version: '10' }).setToken(this.kythiaConfig.bot.token);
 
-        this.logger = logger;
-        this.translator = translator;
-        this.container = {
-            client: this.client,
-            sequelize: this.sequelize,
-            logger: this.logger,
-            t: this.translator.t,
-            redis: this.redis,
-            kythiaConfig: this.kythiaConfig,
-            translator: this.translator,
+		this.models = models;
+		this.helpers = helpers;
+		this.utils = utils;
 
-            models: this.models,
-            helpers: this.helpers,
-        };
+		this.redis = redis;
+		this.sequelize = sequelize;
 
-        this.client.container = this.container;
-        this.client.cooldowns = new Collection();
+		this.logger = logger;
+		this.translator = translator;
+		this.container = {
+			client: this.client,
+			sequelize: this.sequelize,
+			logger: this.logger,
+			t: this.translator.t,
+			redis: this.redis,
+			kythiaConfig: this.kythiaConfig,
+			translator: this.translator,
 
-        this.dbReadyHooks = [];
-        this.clientReadyHooks = [];
+			models: this.models,
+			helpers: this.helpers,
+			utils: this.utils,
+			config: this.kythiaConfig,
+		};
 
-        this.addonManager = null;
-        this.interactionManager = null;
-        this.eventManager = null;
-        this.shutdownManager = null;
-    }
+		this.client.container = this.container;
+		this.client.cooldowns = new Collection();
+
+		this.dbReadyHooks = [];
+		this.clientReadyHooks = [];
+
+		this.addonManager = null;
+		this.interactionManager = null;
+		this.eventManager = null;
+		this.shutdownManager = null;
+		this.dbDependencies = {
+			KythiaModel: undefined,
+			logger: undefined,
+			config: undefined,
+		};
+	}
 
     /**
      * 🔍 Check Required Config
@@ -137,7 +164,7 @@ class Kythia {
      * @param {string} customId - The customId of the button
      * @param {Function} handler - The handler function to execute
      */
-    registerButtonHandler(customId, handler) {
+    registerButtonHandler(customId: string, handler: (interaction: any) => void) {
         if (this.addonManager) {
             this.addonManager.registerButtonHandler(customId, handler);
         }
@@ -149,7 +176,7 @@ class Kythia {
      * @param {string} customIdPrefix - The prefix of the modal customId
      * @param {Function} handler - The handler function to execute
      */
-    registerModalHandler(customIdPrefix, handler) {
+    registerModalHandler(customIdPrefix: string, handler: (interaction: any) => void) {
         if (this.addonManager) {
             this.addonManager.registerModalHandler(customIdPrefix, handler);
         }
@@ -162,7 +189,7 @@ class Kythia {
      * @param {string} addonName - The name of the addon
      * @returns {Promise<boolean>} Always returns true (stub)
      */
-    async _validateLicense(licenseKey, addonName) {
+    async _validateLicense(licenseKey: string, addonName: string): Promise<boolean> {
         return true;
     }
 
@@ -171,7 +198,7 @@ class Kythia {
      * Deploys all registered slash commands to Discord using the REST API.
      * @param {Array} commands - Array of command data to deploy
      */
-    async _deployCommands(commands) {
+    async _deployCommands(commands: any[]) {
         if (!commands || commands.length === 0) {
             this.logger.info('No commands to deploy.');
             return;
@@ -181,7 +208,6 @@ class Kythia {
             const clientId = this.kythiaConfig.bot.clientId;
             const devGuildId = this.kythiaConfig.bot.devGuildId;
 
-            let deployType = '';
             if (this.kythiaConfig.env == 'dev' || this.kythiaConfig.env == 'development') {
                 if (!devGuildId) {
                     this.logger.warn('⚠️ devGuildId not set in config. Skipping guild command deployment.');
@@ -190,7 +216,6 @@ class Kythia {
                 this.logger.info(`🟠 Deploying to GUILD ${devGuildId}...`);
                 await this.rest.put(Routes.applicationGuildCommands(clientId, devGuildId), { body: commands });
                 this.logger.info('✅ Guild commands deployed instantly!');
-                deployType = `Guild (${devGuildId})`;
             } else {
                 this.logger.info(`🟢 Deploying globally...`);
                 await this.rest.put(Routes.applicationCommands(clientId), { body: commands });
@@ -200,11 +225,10 @@ class Kythia {
                     try {
                         await this.rest.put(Routes.applicationGuildCommands(clientId, devGuildId), { body: [] });
                         this.logger.info('✅ Dev guild commands cleared successfully.');
-                    } catch (err) {
+                    } catch (err: any) {
                         this.logger.warn(`⚠️ Could not clear dev guild commands (maybe it was already clean): ${err.message}`);
                     }
                 }
-                deployType = 'Global';
             }
 
             this.logger.info(`⭕ All Slash Commands: ${commands.length}`);
@@ -223,7 +247,7 @@ class Kythia {
      * @returns {object} - Object containing counts { slash, user, message }
      * @private
      */
-    _getCommandCounts(commandJsonArray) {
+    _getCommandCounts(commandJsonArray: CommandData[]) {
         const counts = { slash: 0, user: 0, message: 0 };
 
         if (!Array.isArray(commandJsonArray)) {
@@ -253,7 +277,7 @@ class Kythia {
      * The callback will be executed after all database models have been synchronized.
      * @param {function} callback - Callback to be executed when the database is ready
      */
-    addDbReadyHook(callback) {
+    addDbReadyHook(callback: (c: Client) => void) {
         this.dbReadyHooks.push(callback);
     }
 
@@ -261,7 +285,7 @@ class Kythia {
      * Adds a callback to be executed when the client is ready.
      * @param {function} callback - Callback to be executed when the client is ready
      */
-    addClientReadyHook(callback) {
+    addClientReadyHook(callback: (c: Client) => void) {
         this.clientReadyHooks.push(callback);
     }
 
@@ -421,4 +445,4 @@ class Kythia {
     }
 }
 
-module.exports = Kythia;
+export default Kythia;

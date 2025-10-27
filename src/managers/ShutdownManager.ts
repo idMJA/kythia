@@ -11,15 +11,27 @@
  * component cleanup, and resource management.
  */
 
-const exitHook = require('async-exit-hook');
+import exitHook from 'async-exit-hook';
+import { Message } from 'discord.js';
 
-class ShutdownManager {
+import { ShutdownManager as IShutdownManager } from '../types/shutdown-manager';
+import { KythiaClient } from '../KythiaClient';
+import { KythiaContainer } from '../types/kythia';
+
+class ShutdownManager implements IShutdownManager {
+	client;
+	container;
+	_activeIntervals;
+	_messagesWithActiveCollectors;
+	_collectorPatched;
+	_cleanupAttached;
+	logger;
     /**
      * 🏗️ ShutdownManager Constructor
      * @param {Object} client - Discord client instance
      * @param {Object} container - Dependency container
      */
-    constructor({ client, container }) {
+    constructor({ client, container }: { client: KythiaClient; container: KythiaContainer }) {
         this.client = client;
         this.container = container;
         this._activeIntervals = new Set();
@@ -66,10 +78,10 @@ class ShutdownManager {
         if (!this._messagesWithActiveCollectors) this._messagesWithActiveCollectors = new Set();
 
         if (!this._collectorPatched) {
-            const origCreateCollector = require('discord.js').Message.prototype.createMessageComponentCollector;
+            const origCreateCollector = Message.prototype.createMessageComponentCollector;
             const botInstance = this;
 
-            require('discord.js').Message.prototype.createMessageComponentCollector = function (...args) {
+            Message.prototype.createMessageComponentCollector = function (...args) {
                 const collector = origCreateCollector.apply(this, args);
                 const message = this;
 
@@ -90,7 +102,7 @@ class ShutdownManager {
         }
 
         if (!this._cleanupAttached) {
-            const cleanupAndFlush = async (callback) => {
+            const cleanupAndFlush = async (callback: () => void) => {
                 this.logger.info('🛑 Graceful shutdown initiated...');
 
                 if (this._activeIntervals && this._activeIntervals.size > 0) {
@@ -196,4 +208,4 @@ class ShutdownManager {
     }
 }
 
-module.exports = ShutdownManager;
+export default ShutdownManager;

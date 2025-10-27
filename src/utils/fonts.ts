@@ -6,15 +6,16 @@
  * @copyright © 2025 kenndeclouv
  * @version 0.9.10-beta
  */
-const { registerFont } = require('canvas');
-const path = require('path');
-const fs = require('fs');
+import { registerFont } from 'canvas';
+import * as path from 'path';
+import * as fs from 'fs';
+import { Logger } from 'winston';
 
 /**
  * Loads and registers all fonts located under the core addon fonts directory.
  * Safely no-ops when the directory or font files are not present.
  */
-function loadFonts(logger) {
+function loadFonts(logger: Logger): void {
     const fontsDir = path.join(__dirname, '..', '..', 'addons', 'core', 'assets', 'fonts');
     if (!fs.existsSync(fontsDir)) {
         logger.warn(`🔠 Font directory not found: ${fontsDir}`);
@@ -46,4 +47,4 @@ function loadFonts(logger) {
     }
 }
 
-module.exports = loadFonts;
+export default loadFonts;

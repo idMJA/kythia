@@ -12,18 +12,34 @@
  * events, buttons, modals, and other components from addons.
  */
 
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder, Collection } = require('discord.js');
-const path = require('path');
-const fs = require('fs');
+import { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder, Collection } from 'discord.js';
+import * as path from 'path';
+import * as fs from 'fs';
 
-class AddonManager {
+import { AddonManager as IAddonManager, CommandModule, Handler } from '../types/addon-manager';
+import { KythiaClient } from '../KythiaClient';
+import { KythiaContainer } from '../types/kythia';
+import IKythia from '../Kythia';
+
+class AddonManager implements IAddonManager {
+	client: KythiaClient;
+	container: KythiaContainer;
+	logger;
+	buttonHandlers;
+	modalHandlers;
+	selectMenuHandlers;
+	autocompleteHandlers;
+	commandCategoryMap;
+	categoryToFeatureMap;
+	embedDrafts;
+	eventHandlers;
     /**
      * 🏗️ AddonManager Constructor
      * Initializes the addon manager with necessary collections and maps.
      * @param {Object} client - Discord client instance
      * @param {Object} container - Dependency container
      */
-    constructor({ client, container }) {
+    constructor({ client, container }: { client: KythiaClient; container: KythiaContainer }) {
         this.client = client;
         this.container = container;
         this.logger = this.container.logger;
@@ -45,7 +61,7 @@ class AddonManager {
      * @param {string} customId - The customId of the button
      * @param {Function} handler - The handler function to execute
      */
-    registerButtonHandler(customId, handler) {
+    registerButtonHandler(customId: string, handler: Handler) {
         if (this.buttonHandlers.has(customId)) {
             this.logger.warn(`[REGISTRATION] Warning: Button handler for [${customId}] already exists and will be overwritten.`);
         }
@@ -58,7 +74,7 @@ class AddonManager {
      * @param {string} customIdPrefix - The prefix of the modal customId
      * @param {Function} handler - The handler function to execute
      */
-    registerModalHandler(customIdPrefix, handler) {
+    registerModalHandler(customIdPrefix: string, handler: Handler) {
         if (this.modalHandlers.has(customIdPrefix)) {
             this.logger.warn(`[REGISTRATION] Warning: Modal handler for [${customIdPrefix}] already exists and will be overwritten.`);
         }
@@ -71,7 +87,7 @@ class AddonManager {
      * @param {string} commandName - The command or subcommand key
      * @param {Function} handler - The autocomplete handler function
      */
-    registerAutocompleteHandler(commandName, handler) {
+    registerAutocompleteHandler(commandName: string, handler: Handler) {
         if (this.autocompleteHandlers.has(commandName)) {
             this.logger.warn(`[REGISTRATION] Warning: Autocomplete handler for [${commandName}] already exists and will be overwritten.`);
         }
@@ -89,7 +105,14 @@ class AddonManager {
      * @param {Object} options - Additional options (e.g., folderName)
      * @returns {Object|null} Summary object for logging, or null if not registered
      */
-    registerCommand(module, filePath, commandNamesSet, commandDataForDeployment, permissionDefaults = {}, options = {}) {
+    registerCommand(
+        module: CommandModule,
+        filePath: string,
+        commandNamesSet: Set<string>,
+        commandDataForDeployment: any[],
+        permissionDefaults: any = {},
+        options: any = {}
+    ) {
         if (!module || !module.data) return null;
 
         let commandBuilder = new SlashCommandBuilder();
@@ -134,9 +157,9 @@ class AddonManager {
      * @param {Object} kythiaInstance - The main Kythia instance for addon registration
      * @returns {Promise<Array>} Array of command data for deployment
      */
-    async loadAddons(kythiaInstance) {
+    async loadAddons(kythiaInstance: IKythia) {
         this.logger.info('🔌 Loading & Registering Kythia Addons...');
-        const commandDataForDeployment = [];
+        const commandDataForDeployment: any[] = [];
         const addonsDir = path.join(__dirname, '..', '..', 'addons');
         if (!fs.existsSync(addonsDir)) return commandDataForDeployment;
 
@@ -851,4 +874,4 @@ class AddonManager {
     }
 }
 
-module.exports = AddonManager;
+export default AddonManager;

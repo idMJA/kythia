@@ -11,31 +11,75 @@
  * autocomplete, and context menu commands. Manages permissions, cooldowns, and error handling.
  */
 
-const {
-    Events,
-    Collection,
-    ButtonStyle,
-    MessageFlags,
-    EmbedBuilder,
-    ButtonBuilder,
-    WebhookClient,
-    SeparatorBuilder,
-    ActionRowBuilder,
-    ContainerBuilder,
-    TextDisplayBuilder,
-    SeparatorSpacingSize,
-} = require('discord.js');
-const convertColor = require('../utils/color');
-const Sentry = require('@sentry/node');
+import {
+	Events,
+	Collection,
+	ButtonStyle,
+	MessageFlags,
+	EmbedBuilder,
+	ButtonBuilder,
+	WebhookClient,
+	ActionRowBuilder,
+	TextDisplayBuilder,
+	ChatInputCommandInteraction,
+	AutocompleteInteraction,
+	ButtonInteraction,
+	ModalSubmitInteraction,
+	UserContextMenuCommandInteraction,
+	MessageContextMenuCommandInteraction,
+	AutoModerationActionExecution,
+	ContainerBuilder,
+	SeparatorBuilder,
+	SeparatorSpacingSize,
+} from 'discord.js';
+import * as Sentry from '@sentry/node';
+import convertColor from '../utils/color';
+import { InteractionManager as IInteractionManager, FormatPerms } from '../types/interaction-manager';
+import { KythiaClient } from '../KythiaClient';
+import { KythiaContainer } from '../types/kythia';
+import { Handler } from '../types/addon-manager';
 
-class InteractionManager {
+class InteractionManager implements IInteractionManager {
+	client;
+	container;
+	buttonHandlers;
+	modalHandlers;
+	selectMenuHandlers;
+	autocompleteHandlers;
+	commandCategoryMap;
+	categoryToFeatureMap;
+	kythiaConfig;
+	models;
+	helpers;
+	logger;
+	t;
+	ServerSetting;
+	KythiaVoter;
+	isTeam;
+	isOwner;
+
     /**
      * 🏗️ InteractionManager Constructor
      * @param {Object} client - Discord client instance
      * @param {Object} container - Dependency container
      * @param {Object} handlers - Handler maps from AddonManager
      */
-    constructor({ client, container, handlers }) {
+    constructor({
+	client,
+	container,
+	handlers,
+}: {
+	client: KythiaClient;
+	container: KythiaContainer;
+	handlers: {
+		buttonHandlers: Map<string, Handler>;
+		modalHandlers: Map<string, Handler>;
+		selectMenuHandlers: Map<string, Handler>;
+		autocompleteHandlers: Map<string, Handler>;
+		commandCategoryMap: Map<string, string>;
+		categoryToFeatureMap: Map<string, string>;
+	};
+}) {
         this.client = client;
         this.container = container;
         this.buttonHandlers = handlers.buttonHandlers;
@@ -98,7 +142,7 @@ class InteractionManager {
      * Handle chat input commands
      * @private
      */
-    async _handleChatInputCommand(interaction, formatPerms) {
+    async _handleChatInputCommand(interaction: ChatInputCommandInteraction, formatPerms: FormatPerms) {
         let commandKey = interaction.commandName;
         const group = interaction.options.getSubcommandGroup(false);
         const subcommand = interaction.options.getSubcommand(false);
@@ -144,7 +188,8 @@ class InteractionManager {
             if (!isTeamMember) return interaction.reply({ content: await this.t(interaction, 'common.error.not.team'), ephemeral: true });
         }
         if (command.permissions && interaction.inGuild()) {
-            const missingPerms = interaction.member.permissions.missing(command.permissions);
+            const member = await interaction.guild.members.fetch(interaction.user.id);
+            const missingPerms = member.permissions.missing(command.permissions);
             if (missingPerms.length > 0)
                 return interaction.reply({
                     content: await this.t(interaction, 'common.error.user.missing.perms', { perms: formatPerms(missingPerms) }),
@@ -232,7 +277,7 @@ class InteractionManager {
      * Handle autocomplete interactions
      * @private
      */
-    async _handleAutocomplete(interaction) {
+    async _handleAutocomplete(interaction: AutocompleteInteraction) {
         let commandKey = interaction.commandName;
         const group = interaction.options.getSubcommandGroup(false);
         const subcommand = interaction.options.getSubcommand(false);
@@ -266,7 +311,7 @@ class InteractionManager {
      * Handle button interactions
      * @private
      */
-    async _handleButton(interaction) {
+    async _handleButton(interaction: ButtonInteraction) {
         const handler = this.buttonHandlers.get(interaction.customId.split('_')[0]);
         if (handler) await handler(interaction, this.container);
     }
@@ -275,7 +320,7 @@ class InteractionManager {
      * Handle modal submit interactions
      * @private
      */
-    async _handleModalSubmit(interaction) {
+    async _handleModalSubmit(interaction: ModalSubmitInteraction) {
         // Handle both | and : separators for modal custom IDs
         const customIdPrefix = interaction.customId.includes('|') ? interaction.customId.split('|')[0] : interaction.customId.split(':')[0];
         this.logger.info('Modal submit - customId:', interaction.customId, 'prefix:', customIdPrefix);
@@ -288,7 +333,10 @@ class InteractionManager {
      * Handle context menu commands
      * @private
      */
-    async _handleContextMenuCommand(interaction, formatPerms) {
+    async _handleContextMenuCommand(
+		interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction,
+		formatPerms: FormatPerms
+	) {
         const command = this.client.commands.get(interaction.commandName);
         if (!command) return;
 
@@ -303,7 +351,8 @@ class InteractionManager {
             if (!isTeamMember) return interaction.reply({ content: await this.t(interaction, 'common.error.not.team'), ephemeral: true });
         }
         if (command.permissions && interaction.inGuild()) {
-            const missingPerms = interaction.member.permissions.missing(command.permissions);
+            const member = await interaction.guild.members.fetch(interaction.user.id);
+            const missingPerms = member.permissions.missing(command.permissions);
             if (missingPerms.length > 0)
                 return interaction.reply({
                     content: await this.t(interaction, 'common.error.user.missing.perms', { perms: formatPerms(missingPerms) }),
@@ -401,7 +450,7 @@ class InteractionManager {
      * Handle AutoModeration action execution
      * @private
      */
-    async _handleAutoModerationAction(execution) {
+    async _handleAutoModerationAction(execution: AutoModerationActionExecution) {
         const guildId = execution.guild.id;
         const ruleName = execution.ruleTriggerType.toString();
 
@@ -456,7 +505,7 @@ class InteractionManager {
      * Handle interaction errors
      * @private
      */
-    async _handleInteractionError(interaction, error) {
+    async _handleInteractionError(interaction: any, error: Error) {
         this.logger.error(`Error in interaction handler for ${interaction.user.tag}:`, error);
 
         if (this.kythiaConfig.sentry && this.kythiaConfig.sentry.dsn) {
@@ -531,4 +580,4 @@ class InteractionManager {
     }
 }
 
-module.exports = InteractionManager;
+export default InteractionManager;
