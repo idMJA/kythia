@@ -18,24 +18,18 @@
  */
 
 const { REST, Routes, Collection } = require('discord.js');
-const ServerSetting = require('@coreModels/ServerSetting');
 const KythiaModel = require('./database/KythiaModel');
-const { loadLocales } = require('@coreHelpers/translator');
 const KythiaORM = require('./database/KythiaORM');
-const KythiaManager = require('./KythiaManager');
-const { loadFonts } = require('./utils/fonts');
 const KythiaClient = require('./KythiaClient');
-const User = require('@coreModels/User');
-const { t } = require('@coreHelpers/translator');
-const logger = require('@coreHelpers/logger');
+const loadFonts = require('./utils/fonts');
 const Sentry = require('@sentry/node');
 const figlet = require('figlet');
 
 // Import specialized managers
-const AddonManager = require('./managers/AddonManager');
 const InteractionManager = require('./managers/InteractionManager');
-const EventManager = require('./managers/EventManager');
 const ShutdownManager = require('./managers/ShutdownManager');
+const AddonManager = require('./managers/AddonManager');
+const EventManager = require('./managers/EventManager');
 
 class Kythia {
     /**
@@ -43,20 +37,43 @@ class Kythia {
      * Initializes the Discord client, REST API, and dependency container.
      * Sets up manager instances (but doesn't start them yet).
      */
-    constructor() {
+    constructor({ config, logger, translator, sentry, models, helpers, utils }) {
+        const missingDeps = [];
+        if (!config) missingDeps.push('config');
+        if (!logger) missingDeps.push('logger');
+        if (!translator) {
+            missingDeps.push('translator');
+        } else {
+            if (!translator.t) missingDeps.push('translator.t');
+            if (!translator.loadLocales) missingDeps.push('translator.loadLocales');
+        }
+        if (missingDeps.length > 0) {
+            console.error(`FATAL: Missing required dependencies: ${missingDeps.join(', ')}.`);
+            process.exit(1);
+        }
+        this.kythiaConfig = config;
+
         this.client = KythiaClient();
         this.client.commands = new Collection();
-        this.rest = new REST({ version: '10' }).setToken(kythia.bot.token);
+        this.rest = new REST({ version: '10' }).setToken(this.kythiaConfig.bot.token);
 
+        this.models = models;
+        this.helpers = helpers;
+        this.utils = utils;
+
+        this.logger = logger;
+        this.translator = translator;
         this.container = {
-            kythiaManager: null,
-            ServerSetting: ServerSetting,
             client: this.client,
             sequelize: null,
-            logger: logger,
-            User: User,
-            t: t,
+            logger: this.logger,
+            t: this.translator.t,
             redis: null,
+            kythiaConfig: this.kythiaConfig,
+            translator: this.translator,
+
+            models: this.models,
+            helpers: this.helpers,
         };
 
         this.client.container = this.container;
@@ -92,7 +109,7 @@ class Kythia {
         const missingConfigs = [];
 
         for (const pathArr of requiredConfig) {
-            let value = kythia;
+            let value = this.kythiaConfig;
             for (const key of pathArr) {
                 value = value?.[key];
             }
@@ -103,14 +120,14 @@ class Kythia {
         }
 
         if (missingConfigs.length > 0) {
-            logger.error('❌ Required configurations are not set:');
+            this.logger.error('❌ Required configurations are not set:');
             for (const missing of missingConfigs) {
-                logger.error(`   - ${missing}`);
+                this.logger.error(`   - ${missing}`);
             }
             process.exit(1);
         }
 
-        logger.info('✔️  All required configurations are set');
+        this.logger.info('✔️  All required configurations are set');
     }
 
     /**
@@ -155,47 +172,47 @@ class Kythia {
      */
     async _deployCommands(commands) {
         if (!commands || commands.length === 0) {
-            logger.info('No commands to deploy.');
+            this.logger.info('No commands to deploy.');
             return;
         }
         try {
             const { slash, user, message } = this._getCommandCounts(commands);
-            const clientId = kythia.bot.clientId;
-            const devGuildId = kythia.bot.devGuildId;
+            const clientId = this.kythiaConfig.bot.clientId;
+            const devGuildId = this.kythiaConfig.bot.devGuildId;
 
             let deployType = '';
-            if (kythia.env == 'dev' || kythia.env == 'development') {
+            if (this.kythiaConfig.env == 'dev' || this.kythiaConfig.env == 'development') {
                 if (!devGuildId) {
-                    logger.warn('⚠️ devGuildId not set in config. Skipping guild command deployment.');
+                    this.logger.warn('⚠️ devGuildId not set in config. Skipping guild command deployment.');
                     return;
                 }
-                logger.info(`🟠 Deploying to GUILD ${devGuildId}...`);
+                this.logger.info(`🟠 Deploying to GUILD ${devGuildId}...`);
                 await this.rest.put(Routes.applicationGuildCommands(clientId, devGuildId), { body: commands });
-                logger.info('✅ Guild commands deployed instantly!');
+                this.logger.info('✅ Guild commands deployed instantly!');
                 deployType = `Guild (${devGuildId})`;
             } else {
-                logger.info(`🟢 Deploying globally...`);
+                this.logger.info(`🟢 Deploying globally...`);
                 await this.rest.put(Routes.applicationCommands(clientId), { body: commands });
-                logger.info('✅ Global commands deployed successfully!');
+                this.logger.info('✅ Global commands deployed successfully!');
                 if (devGuildId) {
-                    logger.info(`🧹 Clearing old commands from dev guild: ${devGuildId}...`);
+                    this.logger.info(`🧹 Clearing old commands from dev guild: ${devGuildId}...`);
                     try {
                         await this.rest.put(Routes.applicationGuildCommands(clientId, devGuildId), { body: [] });
-                        logger.info('✅ Dev guild commands cleared successfully.');
+                        this.logger.info('✅ Dev guild commands cleared successfully.');
                     } catch (err) {
-                        logger.warn(`⚠️ Could not clear dev guild commands (maybe it was already clean): ${err.message}`);
+                        this.logger.warn(`⚠️ Could not clear dev guild commands (maybe it was already clean): ${err.message}`);
                     }
                 }
                 deployType = 'Global';
             }
 
-            logger.info(`⭕ All Slash Commands: ${commands.length}`);
-            logger.info(`⭕ Top Level Slash Commands: ${slash}`);
-            logger.info(`⭕ User Context Menu: ${user}`);
-            logger.info(`⭕ Message Context Menu: ${message}`);
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
+            this.logger.info(`⭕ All Slash Commands: ${commands.length}`);
+            this.logger.info(`⭕ Top Level Slash Commands: ${slash}`);
+            this.logger.info(`⭕ User Context Menu: ${user}`);
+            this.logger.info(`⭕ Message Context Menu: ${message}`);
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
         } catch (err) {
-            logger.error('❌ Failed to deploy slash commands:', err);
+            this.logger.error('❌ Failed to deploy slash commands:', err);
         }
     }
 
@@ -209,7 +226,7 @@ class Kythia {
         const counts = { slash: 0, user: 0, message: 0 };
 
         if (!Array.isArray(commandJsonArray)) {
-            logger.warn('commandJsonArray is not iterable. Returning zero counts.');
+            this.logger.warn('commandJsonArray is not iterable. Returning zero counts.');
             return counts;
         }
 
@@ -327,21 +344,21 @@ class Kythia {
             console.log(emptyLine);
             console.log(bottomBorder + '\n');
         } catch (err) {
-            logger.error('❌ Failed to render figlet banner:', err);
+            this.logger.error('❌ Failed to render figlet banner:', err);
         }
 
-        logger.info('🚀 Starting kythia...');
+        this.logger.info('🚀 Starting kythia...');
 
         // Initialize Sentry
-        if (kythia.sentry.dsn) {
+        if (this.kythiaConfig.sentry.dsn) {
             Sentry.init({
-                dsn: kythia.sentry.dsn,
+                dsn: this.kythiaConfig.sentry.dsn,
                 tracesSampleRate: 1.0,
                 profilesSampleRate: 1.0,
             });
-            logger.info('✔️  Sentry Error Tracking is ACTIVE');
+            this.logger.info('✔️  Sentry Error Tracking is ACTIVE');
         } else {
-            logger.warn('🟠 Sentry DSN not found in config. Error tracking is INACTIVE.');
+            this.logger.warn('🟠 Sentry DSN not found in config. Error tracking is INACTIVE.');
         }
 
         this._checkRequiredConfig();
@@ -350,69 +367,65 @@ class Kythia {
             const shouldDeploy = process.argv.includes('--deploy');
 
             // Load locales & fonts
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬[ Load Locales & Fonts ]▬▬▬▬▬▬▬▬▬▬▬');
-            loadLocales();
-            loadFonts();
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬[ Load Locales & Fonts ]▬▬▬▬▬▬▬▬▬▬▬');
+            this.translator.loadLocales();
+            loadFonts(this.logger);
 
             // 1. Initialize Redis cache
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Initialize Cache ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
-            this.container.redis = KythiaModel.initialize(kythia.db.redis);
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Initialize Cache ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
+            this.container.redis = KythiaModel.initialize(this.kythiaConfig.db.redis);
 
             // 2. Create AddonManager and load addons
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Kythia Addons ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
-            this.addonManager = new AddonManager(this.client, this.container);
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Kythia Addons ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
+            this.addonManager = new AddonManager({ client: this.client, container: this.container });
             const allCommands = await this.addonManager.loadAddons(this);
 
             // 3. Initialize database (will use dbReadyHooks that were populated during addon loading)
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Load KythiaORM ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬▬[ Load KythiaORM ]▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
             const sequelize = await KythiaORM(this);
             this.container.sequelize = sequelize;
 
-            // 4. Initialize KythiaManager
-            this.kythiaManager = new KythiaManager(ServerSetting);
-            this.container.kythiaManager = this.kythiaManager;
-
             // 5. Create and initialize EventManager
             const handlers = this.addonManager.getHandlers();
-            this.eventManager = new EventManager(this.client, this.container, handlers.eventHandlers);
+            this.eventManager = new EventManager({ client: this.client, container: this.container, eventHandlers: handlers.eventHandlers });
             this.eventManager.initialize();
 
             // 6. Create and initialize InteractionManager
-            this.interactionManager = new InteractionManager(this.client, this.container, handlers);
+            this.interactionManager = new InteractionManager({ client: this.client, container: this.container, handlers: handlers });
             this.interactionManager.initialize();
 
             // 7. Deploy commands if requested
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬[ Deploy Commands ]▬▬▬▬▬▬▬▬▬▬▬▬▬');
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬[ Deploy Commands ]▬▬▬▬▬▬▬▬▬▬▬▬▬');
             if (shouldDeploy) {
                 await this._deployCommands(allCommands);
             } else {
-                logger.info('⏭️  Skipping command deployment. Use --deploy flag to force update.');
+                this.logger.info('⏭️  Skipping command deployment. Use --deploy flag to force update.');
             }
 
             // 8. Create and initialize ShutdownManager
-            this.shutdownManager = new ShutdownManager(this.client, this.container);
+            this.shutdownManager = new ShutdownManager({ client: this.client, container: this.container });
             this.shutdownManager.initialize();
 
-            logger.info('▬▬▬▬▬▬▬▬▬▬▬[ Systems Initializing ]▬▬▬▬▬▬▬▬▬▬▬▬');
+            this.logger.info('▬▬▬▬▬▬▬▬▬▬▬[ Systems Initializing ]▬▬▬▬▬▬▬▬▬▬▬▬');
 
             // 9. Set up client ready handler
             this.client.once('clientReady', async (c) => {
-                logger.info(`🌸 Logged in as ${this.client.user.tag}`);
-                logger.info(`🚀 Executing ${this.clientReadyHooks.length} client-ready hooks...`);
+                this.logger.info(`🌸 Logged in as ${this.client.user.tag}`);
+                this.logger.info(`🚀 Executing ${this.clientReadyHooks.length} client-ready hooks...`);
                 for (const hook of this.clientReadyHooks) {
                     try {
                         await hook(c);
                     } catch (error) {
-                        logger.error('Failed to execute a client-ready hook:', error);
+                        this.logger.error('Failed to execute a client-ready hook:', error);
                     }
                 }
             });
 
             // 10. Login to Discord
-            await this.client.login(kythia.bot.token);
+            await this.client.login(this.kythiaConfig.bot.token);
         } catch (error) {
-            logger.error('❌ Kythia initialization failed:', error);
-            if (kythia.sentry.dsn) {
+            this.logger.error('❌ Kythia initialization failed:', error);
+            if (this.kythiaConfig.sentry.dsn) {
                 Sentry.captureException(error);
             }
             process.exit(1);

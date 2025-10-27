@@ -13,7 +13,6 @@
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder, Collection } = require('discord.js');
-const logger = require('@coreHelpers/logger');
 const path = require('path');
 const fs = require('fs');
 
@@ -24,9 +23,10 @@ class AddonManager {
      * @param {Object} client - Discord client instance
      * @param {Object} container - Dependency container
      */
-    constructor(client, container) {
+    constructor({ client, container }) {
         this.client = client;
         this.container = container;
+        this.logger = this.container.logger;
 
         // Handler maps
         this.buttonHandlers = new Map();
@@ -47,7 +47,7 @@ class AddonManager {
      */
     registerButtonHandler(customId, handler) {
         if (this.buttonHandlers.has(customId)) {
-            logger.warn(`[REGISTRATION] Warning: Button handler for [${customId}] already exists and will be overwritten.`);
+            this.logger.warn(`[REGISTRATION] Warning: Button handler for [${customId}] already exists and will be overwritten.`);
         }
         this.buttonHandlers.set(customId, handler);
     }
@@ -60,7 +60,7 @@ class AddonManager {
      */
     registerModalHandler(customIdPrefix, handler) {
         if (this.modalHandlers.has(customIdPrefix)) {
-            logger.warn(`[REGISTRATION] Warning: Modal handler for [${customIdPrefix}] already exists and will be overwritten.`);
+            this.logger.warn(`[REGISTRATION] Warning: Modal handler for [${customIdPrefix}] already exists and will be overwritten.`);
         }
         this.modalHandlers.set(customIdPrefix, handler);
     }
@@ -73,7 +73,7 @@ class AddonManager {
      */
     registerAutocompleteHandler(commandName, handler) {
         if (this.autocompleteHandlers.has(commandName)) {
-            logger.warn(`[REGISTRATION] Warning: Autocomplete handler for [${commandName}] already exists and will be overwritten.`);
+            this.logger.warn(`[REGISTRATION] Warning: Autocomplete handler for [${commandName}] already exists and will be overwritten.`);
         }
         this.autocompleteHandlers.set(commandName, handler);
     }
@@ -135,7 +135,7 @@ class AddonManager {
      * @returns {Promise<Array>} Array of command data for deployment
      */
     async loadAddons(kythiaInstance) {
-        logger.info('🔌 Loading & Registering Kythia Addons...');
+        this.logger.info('🔌 Loading & Registering Kythia Addons...');
         const commandDataForDeployment = [];
         const addonsDir = path.join(__dirname, '..', '..', 'addons');
         if (!fs.existsSync(addonsDir)) return commandDataForDeployment;
@@ -163,13 +163,13 @@ class AddonManager {
                         const addonJsonRaw = fs.readFileSync(addonJsonPath, 'utf8');
                         addonJson = JSON.parse(addonJsonRaw);
                     } catch (jsonErr) {
-                        logger.warn(`🔴 Failed to parse addon.json for ${addon.name}: ${jsonErr.message}`);
+                        this.logger.warn(`🔴 Failed to parse addon.json for ${addon.name}: ${jsonErr.message}`);
                         continue;
                     }
 
                     addonVersion = addonJson.version || 'v0.0.0-alpha';
                     if (addonJson.active === false) {
-                        logger.info(`🟠 Addon ${addon.name.toUpperCase()} disabled`);
+                        this.logger.info(`🟠 Addon ${addon.name.toUpperCase()} disabled`);
                         continue;
                     }
                     if (addonJson.featureFlag) {
@@ -177,25 +177,25 @@ class AddonManager {
                         this.categoryToFeatureMap.set(addon.name, addonJson.featureFlag);
                     }
                 } else {
-                    logger.warn(`🔴 Addon ${addon.name.toUpperCase()} is missing addon.json. Skipping.`);
+                    this.logger.warn(`🔴 Addon ${addon.name.toUpperCase()} is missing addon.json. Skipping.`);
                     continue;
                 }
             } catch (e) {
-                logger.warn(`🔴 Error reading addon.json for ${addonDir}: ${e.message}`);
+                this.logger.warn(`🔴 Error reading addon.json for ${addonDir}: ${e.message}`);
                 continue;
             }
 
             try {
-                const configAddons = kythia?.addons || {};
+                const configAddons = this.container.kythiaConfig?.addons || {};
                 if (configAddons.all?.active === false) {
-                    logger.info(`🟠 Addon ${addon.name.toUpperCase()} disabled via kythia config`);
+                    this.logger.info(`🟠 Addon ${addon.name.toUpperCase()} disabled via kythia config`);
                     continue;
                 } else if (configAddons[addon.name]?.active === false) {
-                    logger.info(`🟠 Addon ${addon.name.toUpperCase()} disabled via kythia config`);
+                    this.logger.info(`🟠 Addon ${addon.name.toUpperCase()} disabled via kythia config`);
                     continue;
                 }
             } catch (e) {
-                logger.warn(`🔴 Error checking config for addon ${addon.name.toUpperCase()}: ${e.message}`);
+                this.logger.warn(`🔴 Error checking config for addon ${addon.name.toUpperCase()}: ${e.message}`);
             }
 
             let addonPermissionDefaults = {};
@@ -204,9 +204,9 @@ class AddonManager {
             if (fs.existsSync(permissionsFilePath)) {
                 try {
                     addonPermissionDefaults = require(permissionsFilePath);
-                    logger.info(`  └─> Found and loaded permission defaults for addon '${addon.name.toUpperCase()}'`);
+                    this.logger.info(`  └─> Found and loaded permission defaults for addon '${addon.name.toUpperCase()}'`);
                 } catch (e) {
-                    logger.warn(`  └─> Failed to load permissions.js for addon '${addon.name.toUpperCase()}': ${e.message}`);
+                    this.logger.warn(`  └─> Failed to load permissions.js for addon '${addon.name.toUpperCase()}': ${e.message}`);
                 }
             }
 
@@ -227,7 +227,7 @@ class AddonManager {
                     );
                     loadedCommandsSummary.push(...commandsResult);
                 } catch (error) {
-                    logger.error(`❌ Failed to load commands from addon "${addon.name}":`, error);
+                    this.logger.error(`❌ Failed to load commands from addon "${addon.name}":`, error);
                 }
             }
 
@@ -243,7 +243,7 @@ class AddonManager {
                         }
                     }
                 } catch (error) {
-                    logger.error(`❌ Failed to register components for [${addon.name}]:`, error);
+                    this.logger.error(`❌ Failed to register components for [${addon.name}]:`, error);
                 }
             }
 
@@ -263,7 +263,7 @@ class AddonManager {
                             loadedEventsSummary.push(eventName);
                         }
                     } catch (error) {
-                        logger.error(`❌ Failed to register event [${eventName}] for [${addon.name}]:`, error);
+                        this.logger.error(`❌ Failed to register event [${eventName}] for [${addon.name}]:`, error);
                     }
                 }
             }
@@ -388,7 +388,7 @@ class AddonManager {
 
                     loadedSubcommandsSummary.push({ group: groupBuilder.name, subcommands: subcommandsInGroupSummary });
                 } catch (e) {
-                    logger.error(`❌ Failed to load subcommand group from ${itemPath}:`, e);
+                    this.logger.error(`❌ Failed to load subcommand group from ${itemPath}:`, e);
                 }
             }
         }
@@ -510,8 +510,7 @@ class AddonManager {
                     const commandName = commandBuilder.name;
 
                     try {
-                        const { getLocales } = require('@coreHelpers/translator');
-                        const allLocales = getLocales();
+                        const allLocales = this.container.translator.getLocales();
 
                         let nameLocalizations = {};
                         let descriptionLocalizations = {};
@@ -541,11 +540,11 @@ class AddonManager {
                         // Handle subcommand localizations
                         this._applySubcommandLocalizations(commandBuilder, commandName, allLocales);
                     } catch (e) {
-                        logger.warn(`Failed to load localizations for command "${commandName}": ${e.message}`);
+                        this.logger.warn(`Failed to load localizations for command "${commandName}": ${e.message}`);
                     }
 
                     if (commandNamesSet.has(commandName)) {
-                        logger.warn(`Duplicate command name detected: "${commandName}" in ${itemPath}`);
+                        this.logger.warn(`Duplicate command name detected: "${commandName}" in ${itemPath}`);
                     } else {
                         commandNamesSet.add(commandName);
                         this.client.commands.set(commandName, commandModule);
@@ -559,7 +558,7 @@ class AddonManager {
                 if (commandModule.contextMenuCommand) {
                     const commandName = commandModule.contextMenuCommand.name;
                     if (commandNamesSet.has(commandName) && !commandModule.slashCommand) {
-                        logger.warn(`Duplicate command name detected: "${commandName}" in ${itemPath}`);
+                        this.logger.warn(`Duplicate command name detected: "${commandName}" in ${itemPath}`);
                     } else {
                         if (!commandNamesSet.has(commandName)) commandNamesSet.add(commandName);
                         this.client.commands.set(commandName, commandModule);
@@ -593,8 +592,7 @@ class AddonManager {
                         if (commandModule.subcommand) continue;
 
                         try {
-                            const { getLocales } = require('@coreHelpers/translator');
-                            const allLocales = getLocales();
+                            const allLocales = this.container.translator.getLocales();
 
                             let nameLocalizations = {};
                             let descriptionLocalizations = {};
@@ -623,12 +621,12 @@ class AddonManager {
 
                             this._applySubcommandLocalizations(commandBuilder, commandName, allLocales);
                         } catch (e) {
-                            logger.warn(`Failed to load localizations for command "${commandName}": ${e.message}`);
+                            this.logger.warn(`Failed to load localizations for command "${commandName}": ${e.message}`);
                         }
 
                         this.commandCategoryMap.set(commandName, item.name);
                         if (commandNamesSet.has(commandName)) {
-                            logger.warn(`Duplicate slash command name detected: "${commandName}" in ${filePath}`);
+                            this.logger.warn(`Duplicate slash command name detected: "${commandName}" in ${filePath}`);
                         } else {
                             commandNamesSet.add(commandName);
                             this.client.commands.set(commandName, commandModule);
@@ -790,23 +788,23 @@ class AddonManager {
      * @private
      */
     _logAddonSummary(addonSummaries) {
-        logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬[ Addon(s) Loaded ]▬▬▬▬▬▬▬▬▬▬▬▬▬');
+        this.logger.info('▬▬▬▬▬▬▬▬▬▬▬▬▬[ Addon(s) Loaded ]▬▬▬▬▬▬▬▬▬▬▬▬▬');
         for (const addon of addonSummaries) {
-            logger.info(`📦  ${addon.name} (v${addon.version})`);
-            logger.info('  ⚙️  Command(s)');
+            this.logger.info(`📦  ${addon.name} (v${addon.version})`);
+            this.logger.info('  ⚙️  Command(s)');
             if (!addon.commands.length) {
-                logger.info('     (no commands registered)');
+                this.logger.info('     (no commands registered)');
             } else {
                 for (const cmd of addon.commands) {
                     if (cmd.type === 'group') {
-                        logger.info(`     └─ /${cmd.name}`);
+                        this.logger.info(`     └─ /${cmd.name}`);
                         for (const sub of cmd.subcommands) {
                             if (typeof sub === 'string') {
-                                logger.info(`        └─ ${sub}`);
+                                this.logger.info(`        └─ ${sub}`);
                             } else if (typeof sub === 'object' && sub.group) {
-                                logger.info(`          └─ [${sub.group}]`);
+                                this.logger.info(`          └─ [${sub.group}]`);
                                 for (const subsub of sub.subcommands) {
-                                    logger.info(`             └─ ${subsub}`);
+                                    this.logger.info(`             └─ ${subsub}`);
                                 }
                             }
                         }
@@ -815,23 +813,23 @@ class AddonManager {
                         if (cmd.kind === 'slash') kindLabel = ' [slash]';
                         else if (cmd.kind === 'contextMenu') kindLabel = ' [contextMenu]';
                         if (cmd.folder) {
-                            logger.info(`     └─ /${cmd.name} (${cmd.folder})${kindLabel}`);
+                            this.logger.info(`     └─ /${cmd.name} (${cmd.folder})${kindLabel}`);
                         } else {
-                            logger.info(`     └─ /${cmd.name}${kindLabel}`);
+                            this.logger.info(`     └─ /${cmd.name}${kindLabel}`);
                         }
                     }
                 }
             }
             if (addon.register && addon.register.length) {
-                logger.info('  🧩 Component(s)');
+                this.logger.info('  🧩 Component(s)');
                 for (const reg of addon.register) {
-                    logger.info(`   ${reg}`);
+                    this.logger.info(`   ${reg}`);
                 }
             }
             if (addon.events && addon.events.length) {
-                logger.info('  🔔 Event(s)');
+                this.logger.info('  🔔 Event(s)');
                 for (const ev of addon.events) {
-                    logger.info(`     └─ ${ev}`);
+                    this.logger.info(`     └─ ${ev}`);
                 }
             }
         }

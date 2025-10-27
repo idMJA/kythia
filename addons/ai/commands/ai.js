@@ -22,12 +22,11 @@ module.exports = {
     voteLocked: true,
     guildOnly: true,
     async execute(interaction, container) {
-        const { kythiaManager } = container;
         await interaction.deferReply();
 
         const channelId = interaction.channel.id;
-        let serverSetting = await kythiaManager.get(interaction.guild.id);
-        let aiChannelIds = Array.isArray(serverSetting?.aiChannelIds) ? [...serverSetting.aiChannelIds] : [];
+        let setting = await ServerSetting.getCache({ guildId: interaction.guild.id });
+        let aiChannelIds = Array.isArray(setting?.aiChannelIds) ? [...setting.aiChannelIds] : [];
         const subcommand = interaction.options.getSubcommand();
 
         if (subcommand === 'enable') {
@@ -37,9 +36,9 @@ module.exports = {
             }
 
             aiChannelIds.push(channelId);
-            await kythiaManager.update(interaction.guild.id, {
-                aiChannelIds: aiChannelIds,
-            });
+            setting.aiChannelIds = aiChannelIds;
+            setting.changed('aiChannelIds', true);
+            await setting.save();
             const embed = new EmbedBuilder().setColor('Green').setDescription(await t(interaction, 'ai.ai.manage.enable.success'));
             return interaction.editReply({ embeds: [embed] });
         }
@@ -52,9 +51,10 @@ module.exports = {
             }
 
             aiChannelIds.splice(index, 1);
-            await kythiaManager.update(interaction.guild.id, {
-                aiChannelIds: aiChannelIds,
-            });
+            setting.aiChannelIds = aiChannelIds;
+            setting.changed('aiChannelIds', true);
+            await setting.save();
+            
             const embed = new EmbedBuilder().setColor('Orange').setDescription(await t(interaction, 'ai.ai.manage.disable.success'));
             return interaction.editReply({ embeds: [embed] });
         }

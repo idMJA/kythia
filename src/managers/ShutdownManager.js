@@ -12,7 +12,6 @@
  */
 
 const exitHook = require('async-exit-hook');
-const logger = require('@coreHelpers/logger');
 
 class ShutdownManager {
     /**
@@ -20,13 +19,15 @@ class ShutdownManager {
      * @param {Object} client - Discord client instance
      * @param {Object} container - Dependency container
      */
-    constructor(client, container) {
+    constructor({ client, container }) {
         this.client = client;
         this.container = container;
         this._activeIntervals = new Set();
         this._messagesWithActiveCollectors = new Set();
         this._collectorPatched = false;
         this._cleanupAttached = false;
+
+        this.logger = this.container.logger;
     }
 
     /**
@@ -53,7 +54,7 @@ class ShutdownManager {
             botInstance._activeIntervals.delete(intervalId);
         };
 
-        logger.info('✅ Global setInterval/clearInterval has been patched for tracking.');
+        this.logger.info('✅ Global setInterval/clearInterval has been patched for tracking.');
     }
 
     /**
@@ -85,15 +86,15 @@ class ShutdownManager {
                 return collector;
             };
             this._collectorPatched = true;
-            logger.info('✅ Corrected collector-based component tracking has been patched.');
+            this.logger.info('✅ Corrected collector-based component tracking has been patched.');
         }
 
         if (!this._cleanupAttached) {
             const cleanupAndFlush = async (callback) => {
-                logger.info('🛑 Graceful shutdown initiated...');
+                this.logger.info('🛑 Graceful shutdown initiated...');
 
                 if (this._activeIntervals && this._activeIntervals.size > 0) {
-                    logger.info(`🛑 Halting ${this._activeIntervals.size} active global intervals...`);
+                    this.logger.info(`🛑 Halting ${this._activeIntervals.size} active global intervals...`);
                     for (const intervalId of this._activeIntervals) {
                         clearInterval(intervalId);
                     }
@@ -102,7 +103,7 @@ class ShutdownManager {
                 const messagesToProcess = this._messagesWithActiveCollectors;
 
                 if (messagesToProcess && messagesToProcess.size > 0) {
-                    logger.info(`🛑 Disabling components on up to ${messagesToProcess.size} messages.`);
+                    this.logger.info(`🛑 Disabling components on up to ${messagesToProcess.size} messages.`);
                     const editPromises = [];
 
                     function disableRecursively(components) {
@@ -130,14 +131,14 @@ class ShutdownManager {
                     }
                     await Promise.allSettled(editPromises);
                 }
-                logger.info('✅ Component cleanup complete.');
+                this.logger.info('✅ Component cleanup complete.');
 
-                logger.info('🚰 Flushing remaining logs...');
-                logger.on('finish', () => {
+                this.logger.info('🚰 Flushing remaining logs...');
+                this.logger.on('finish', () => {
                     console.log('⏳ Logger has flushed. Kythia is now safely shutting down.');
                     if (callback) callback();
                 });
-                logger.end();
+                this.logger.end();
                 setTimeout(() => {
                     console.log('⏳ Logger flush timeout. Forcing exit.');
                     if (callback) callback();
@@ -146,15 +147,15 @@ class ShutdownManager {
 
             exitHook(cleanupAndFlush);
             process.on('unhandledRejection', (error) => {
-                logger.error('‼️ UNHANDLED PROMISE REJECTION:', error);
+                this.logger.error('‼️ UNHANDLED PROMISE REJECTION:', error);
             });
             process.on('uncaughtException', (error) => {
-                logger.error('‼️ UNCAUGHT EXCEPTION! Bot will shutdown.', error);
+                this.logger.error('‼️ UNCAUGHT EXCEPTION! Bot will shutdown.', error);
                 process.exit(1);
             });
 
             this._cleanupAttached = true;
-            logger.info('🛡️  Graceful shutdown and error handlers are now active.');
+            this.logger.info('🛡️  Graceful shutdown and error handlers are now active.');
         }
     }
 

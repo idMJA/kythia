@@ -25,12 +25,7 @@ const {
     TextDisplayBuilder,
     SeparatorSpacingSize,
 } = require('discord.js');
-const { isTeam, isOwner } = require('@coreHelpers/discord');
-const ServerSetting = require('@coreModels/ServerSetting');
-const KythiaVoter = require('@coreModels/KythiaVoter');
-const { t } = require('@coreHelpers/translator');
 const convertColor = require('../utils/color');
-const logger = require('@coreHelpers/logger');
 const Sentry = require('@sentry/node');
 
 class InteractionManager {
@@ -40,7 +35,7 @@ class InteractionManager {
      * @param {Object} container - Dependency container
      * @param {Object} handlers - Handler maps from AddonManager
      */
-    constructor(client, container, handlers) {
+    constructor({ client, container, handlers }) {
         this.client = client;
         this.container = container;
         this.buttonHandlers = handlers.buttonHandlers;
@@ -49,6 +44,18 @@ class InteractionManager {
         this.autocompleteHandlers = handlers.autocompleteHandlers;
         this.commandCategoryMap = handlers.commandCategoryMap;
         this.categoryToFeatureMap = handlers.categoryToFeatureMap;
+
+        this.kythiaConfig = this.container.config;
+        this.models = this.container.models;
+        this.helpers = this.container.helpers;
+
+        this.logger = this.container.logger;
+        this.t = this.container.t;
+
+        this.ServerSetting = this.models.ServerSetting;
+        this.KythiaVoter = this.models.KythiaVoter;
+        this.isTeam = this.helpers.discord.isTeam;
+        this.isOwner = this.helpers.discord.isOwner;
     }
 
     /**
@@ -82,7 +89,7 @@ class InteractionManager {
             try {
                 await this._handleAutoModerationAction(execution);
             } catch (err) {
-                logger.error(`[AutoMod Logger] Error during execution for ${execution.guild.name}:`, err);
+                this.logger.error(`[AutoMod Logger] Error during execution for ${execution.guild.name}:`, err);
             }
         });
     }
@@ -105,8 +112,8 @@ class InteractionManager {
             command = this.client.commands.get(interaction.commandName);
         }
         if (!command) {
-            logger.error(`Command not found for key: ${commandKey}`);
-            return interaction.reply({ content: await t(interaction, 'common.error.command.not.found'), ephemeral: true });
+            this.logger.error(`Command not found for key: ${commandKey}`);
+            return interaction.reply({ content: await this.t(interaction, 'common.error.command.not.found'), ephemeral: true });
         }
 
         // Feature flag check
@@ -114,12 +121,12 @@ class InteractionManager {
             const category = this.commandCategoryMap.get(interaction.commandName);
             const featureFlag = this.categoryToFeatureMap.get(category);
 
-            if (featureFlag && !isOwner(interaction.user.id)) {
-                const settings = await ServerSetting.getCache({ guildId: interaction.guild.id });
+            if (featureFlag && !this.isOwner(interaction.user.id)) {
+                const settings = await this.ServerSetting.getCache({ guildId: interaction.guild.id });
 
-                if (settings && settings.hasOwnProperty(featureFlag) && settings[featureFlag] === false) {
+                if (settings && Object.prototype.hasOwnProperty.call(settings, featureFlag) && settings[featureFlag] === false) {
                     const featureName = category.charAt(0).toUpperCase() + category.slice(1);
-                    const reply = await t(interaction, 'common.error.feature.disabled', { feature: featureName });
+                    const reply = await this.t(interaction, 'common.error.feature.disabled', { feature: featureName });
                     return interaction.reply({ content: reply });
                 }
             }
@@ -127,20 +134,20 @@ class InteractionManager {
 
         // Permission checks
         if (command.guildOnly && !interaction.inGuild()) {
-            return interaction.reply({ content: await t(interaction, 'common.error.guild.only'), ephemeral: true });
+            return interaction.reply({ content: await this.t(interaction, 'common.error.guild.only'), ephemeral: true });
         }
-        if (command.ownerOnly && !isOwner(interaction.user.id)) {
-            return interaction.reply({ content: await t(interaction, 'common.error.not.owner'), ephemeral: true });
+        if (command.ownerOnly && !this.isOwner(interaction.user.id)) {
+            return interaction.reply({ content: await this.t(interaction, 'common.error.not.owner'), ephemeral: true });
         }
-        if (command.teamOnly && !isOwner(interaction.user.id)) {
-            const isTeamMember = await isTeam(interaction.user);
-            if (!isTeamMember) return interaction.reply({ content: await t(interaction, 'common.error.not.team'), ephemeral: true });
+        if (command.teamOnly && !this.isOwner(interaction.user.id)) {
+            const isTeamMember = await this.isTeam(interaction.user);
+            if (!isTeamMember) return interaction.reply({ content: await this.t(interaction, 'common.error.not.team'), ephemeral: true });
         }
         if (command.permissions && interaction.inGuild()) {
             const missingPerms = interaction.member.permissions.missing(command.permissions);
             if (missingPerms.length > 0)
                 return interaction.reply({
-                    content: await t(interaction, 'common.error.user.missing.perms', { perms: formatPerms(missingPerms) }),
+                    content: await this.t(interaction, 'common.error.user.missing.perms', { perms: formatPerms(missingPerms) }),
                     ephemeral: true,
                 });
         }
@@ -148,36 +155,40 @@ class InteractionManager {
             const missingPerms = interaction.guild.members.me.permissions.missing(command.botPermissions);
             if (missingPerms.length > 0)
                 return interaction.reply({
-                    content: await t(interaction, 'common.error.bot.missing.perms', { perms: formatPerms(missingPerms) }),
+                    content: await this.t(interaction, 'common.error.bot.missing.perms', { perms: formatPerms(missingPerms) }),
                     ephemeral: true,
                 });
         }
 
         // Vote lock check
-        if (command.voteLocked && !isOwner(interaction.user.id)) {
-            const voter = await KythiaVoter.getCache({ userId: interaction.user.id });
+        if (command.voteLocked && !this.isOwner(interaction.user.id)) {
+            const voter = await this.KythiaVoter.getCache({ userId: interaction.user.id });
             const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
             if (!voter || voter.votedAt < twelveHoursAgo) {
-                const container = new ContainerBuilder().setAccentColor(convertColor(kythia.bot.color, { from: 'hex', to: 'decimal' }));
+                const container = new ContainerBuilder().setAccentColor(
+                    convertColor(this.kythiaConfig.bot.color, { from: 'hex', to: 'decimal' })
+                );
                 container.addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(await t(interaction, 'common.error.vote.locked.text'))
+                    new TextDisplayBuilder().setContent(await this.t(interaction, 'common.error.vote.locked.text'))
                 );
                 container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
                 container.addActionRowComponents(
                     new ActionRowBuilder().addComponents(
                         new ButtonBuilder()
                             .setLabel(
-                                await t(interaction, 'common.error.vote.locked.button', {
+                                await this.t(interaction, 'common.error.vote.locked.button', {
                                     botName: interaction.client.user.username,
                                 })
                             )
                             .setStyle(ButtonStyle.Link)
-                            .setURL(`https://top.gg/bot/${kythia.bot.clientId}/vote`)
+                            .setURL(`https://top.gg/bot/${this.kythiaConfig.bot.clientId}/vote`)
                     )
                 );
                 container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
-                container.addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'common.container.footer')));
+                container.addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(await this.t(interaction, 'common.container.footer'))
+                );
                 return interaction.reply({
                     components: [container],
                     ephemeral: true,
@@ -187,9 +198,9 @@ class InteractionManager {
         }
 
         // Cooldown check
-        const cooldownDuration = command.cooldown ?? kythia.bot.globalCommandCooldown ?? 0;
+        const cooldownDuration = command.cooldown ?? this.kythiaConfig.bot.globalCommandCooldown ?? 0;
 
-        if (cooldownDuration > 0 && !isOwner(interaction.user.id)) {
+        if (cooldownDuration > 0 && !this.isOwner(interaction.user.id)) {
             const { cooldowns } = this.client;
 
             if (!cooldowns.has(command.name)) {
@@ -205,7 +216,7 @@ class InteractionManager {
 
                 if (now < expirationTime) {
                     const timeLeft = (expirationTime - now) / 1000;
-                    const reply = await t(interaction, 'common.error.cooldown', { time: timeLeft.toFixed(1) });
+                    const reply = await this.t(interaction, 'common.error.cooldown', { time: timeLeft.toFixed(1) });
                     return interaction.reply({ content: reply, ephemeral: true });
                 }
             }
@@ -239,7 +250,7 @@ class InteractionManager {
             try {
                 await handler(interaction, this.container);
             } catch (err) {
-                logger.error(`Error in autocomplete handler for ${commandKey}:`, err);
+                this.logger.error(`Error in autocomplete handler for ${commandKey}:`, err);
                 try {
                     await interaction.respond([]);
                 } catch (e) {}
@@ -267,9 +278,9 @@ class InteractionManager {
     async _handleModalSubmit(interaction) {
         // Handle both | and : separators for modal custom IDs
         const customIdPrefix = interaction.customId.includes('|') ? interaction.customId.split('|')[0] : interaction.customId.split(':')[0];
-        logger.info('Modal submit - customId:', interaction.customId, 'prefix:', customIdPrefix);
+        this.logger.info('Modal submit - customId:', interaction.customId, 'prefix:', customIdPrefix);
         const handler = this.modalHandlers.get(customIdPrefix);
-        logger.info('Modal handler found:', !!handler);
+        this.logger.info('Modal handler found:', !!handler);
         if (handler) await handler(interaction, this.container);
     }
 
@@ -282,20 +293,20 @@ class InteractionManager {
         if (!command) return;
 
         if (command.guildOnly && !interaction.inGuild()) {
-            return interaction.reply({ content: await t(interaction, 'common.error.guild.only'), ephemeral: true });
+            return interaction.reply({ content: await this.t(interaction, 'common.error.guild.only'), ephemeral: true });
         }
-        if (command.ownerOnly && !isOwner(interaction.user.id)) {
-            return interaction.reply({ content: await t(interaction, 'common.error.not.owner'), ephemeral: true });
+        if (command.ownerOnly && !this.isOwner(interaction.user.id)) {
+            return interaction.reply({ content: await this.t(interaction, 'common.error.not.owner'), ephemeral: true });
         }
-        if (command.teamOnly && !isOwner(interaction.user.id)) {
-            const isTeamMember = await isTeam(interaction.user);
-            if (!isTeamMember) return interaction.reply({ content: await t(interaction, 'common.error.not.team'), ephemeral: true });
+        if (command.teamOnly && !this.isOwner(interaction.user.id)) {
+            const isTeamMember = await this.isTeam(interaction.user);
+            if (!isTeamMember) return interaction.reply({ content: await this.t(interaction, 'common.error.not.team'), ephemeral: true });
         }
         if (command.permissions && interaction.inGuild()) {
             const missingPerms = interaction.member.permissions.missing(command.permissions);
             if (missingPerms.length > 0)
                 return interaction.reply({
-                    content: await t(interaction, 'common.error.user.missing.perms', { perms: formatPerms(missingPerms) }),
+                    content: await this.t(interaction, 'common.error.user.missing.perms', { perms: formatPerms(missingPerms) }),
                     ephemeral: true,
                 });
         }
@@ -303,38 +314,40 @@ class InteractionManager {
             const missingPerms = interaction.guild.members.me.permissions.missing(command.botPermissions);
             if (missingPerms.length > 0)
                 return interaction.reply({
-                    content: await t(interaction, 'common.error.bot.missing.perms', { perms: formatPerms(missingPerms) }),
+                    content: await this.t(interaction, 'common.error.bot.missing.perms', { perms: formatPerms(missingPerms) }),
                     ephemeral: true,
                 });
         }
-        if (command.isInMainGuild && !isOwner(interaction.user.id)) {
-            const mainGuild = this.client.guilds.cache.get(kythia.bot.mainGuildId);
+        if (command.isInMainGuild && !this.isOwner(interaction.user.id)) {
+            const mainGuild = this.client.guilds.cache.get(this.kythiaConfig.bot.mainGuildId);
             if (!mainGuild) {
-                logger.error(
-                    `❌ [isInMainGuild Check] Error: Bot is not a member of the main guild specified in config: ${kythia.bot.mainGuildId}`
+                this.logger.error(
+                    `❌ [isInMainGuild Check] Error: Bot is not a member of the main guild specified in config: ${this.kythiaConfig.bot.mainGuildId}`
                 );
             }
             try {
                 await mainGuild.members.fetch(interaction.user.id);
             } catch (error) {
-                const container = new ContainerBuilder().setAccentColor(convertColor(kythia.bot.color, { from: 'hex', to: 'decimal' }));
+                const container = new ContainerBuilder().setAccentColor(
+                    convertColor(this.kythiaConfig.bot.color, { from: 'hex', to: 'decimal' })
+                );
                 container.addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
-                        await t(interaction, 'common.error.not.in.main.guild.text', { name: mainGuild.name })
+                        await this.t(interaction, 'common.error.not.in.main.guild.text', { name: mainGuild.name })
                     )
                 );
                 container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
                 container.addActionRowComponents(
                     new ActionRowBuilder().addComponents(
                         new ButtonBuilder()
-                            .setLabel(await t(interaction, 'common.error.not.in.main.guild.button.join'))
+                            .setLabel(await this.t(interaction, 'common.error.not.in.main.guild.button.join'))
                             .setStyle(ButtonStyle.Link)
-                            .setURL(kythia.settings.supportServer)
+                            .setURL(this.kythiaConfig.settings.supportServer)
                     )
                 );
                 container.addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
-                        await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
+                        await this.t(interaction, 'common.container.footer', { username: interaction.client.user.username })
                     )
                 );
                 return interaction.reply({
@@ -343,32 +356,34 @@ class InteractionManager {
                 });
             }
         }
-        if (command.voteLocked && !isOwner(interaction.user.id)) {
-            const voter = await KythiaVoter.getCache({ userId: interaction.user.id });
+        if (command.voteLocked && !this.isOwner(interaction.user.id)) {
+            const voter = await this.KythiaVoter.getCache({ userId: interaction.user.id });
             const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
             if (!voter || voter.votedAt < twelveHoursAgo) {
-                const container = new ContainerBuilder().setAccentColor(convertColor(kythia.bot.color, { from: 'hex', to: 'decimal' }));
+                const container = new ContainerBuilder().setAccentColor(
+                    convertColor(this.kythiaConfig.bot.color, { from: 'hex', to: 'decimal' })
+                );
                 container.addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(await t(interaction, 'common.error.vote.locked.text'))
+                    new TextDisplayBuilder().setContent(await this.t(interaction, 'common.error.vote.locked.text'))
                 );
                 container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
                 container.addActionRowComponents(
                     new ActionRowBuilder().addComponents(
                         new ButtonBuilder()
                             .setLabel(
-                                await t(interaction, 'common.error.vote.locked.button', {
+                                await this.t(interaction, 'common.error.vote.locked.button', {
                                     username: interaction.client.user.username,
                                 })
                             )
                             .setStyle(ButtonStyle.Link)
-                            .setURL(`https://top.gg/bot/${kythia.bot.clientId}/vote`)
+                            .setURL(`https://top.gg/bot/${this.kythiaConfig.bot.clientId}/vote`)
                     )
                 );
                 container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
                 container.addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
-                        await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
+                        await this.t(interaction, 'common.container.footer', { username: interaction.client.user.username })
                     )
                 );
                 return interaction.reply({
@@ -390,7 +405,7 @@ class InteractionManager {
         const guildId = execution.guild.id;
         const ruleName = execution.ruleTriggerType.toString();
 
-        const settings = await ServerSetting.getCache({ guildId: guildId });
+        const settings = await this.ServerSetting.getCache({ guildId: guildId });
         const locale = execution.guild.preferredLocale;
 
         if (!settings || !settings.modLogChannelId) {
@@ -404,7 +419,7 @@ class InteractionManager {
             const embed = new EmbedBuilder()
                 .setColor('Red')
                 .setDescription(
-                    await t(
+                    await this.t(
                         null,
                         'common.automod',
                         {
@@ -415,14 +430,14 @@ class InteractionManager {
                 )
                 .addFields(
                     {
-                        name: await t(null, 'common.automod.field.user', {}, locale),
+                        name: await this.t(null, 'common.automod.field.user', {}, locale),
                         value: `${execution.user.tag} (${execution.userId})`,
                         inline: true,
                     },
-                    { name: await t(null, 'common.automod.field.rule.trigger', {}, locale), value: `\`${ruleName}\``, inline: true }
+                    { name: await this.t(null, 'common.automod.field.rule.trigger', {}, locale), value: `\`${ruleName}\``, inline: true }
                 )
                 .setFooter({
-                    text: await t(
+                    text: await this.t(
                         null,
                         'common.embed.footer',
                         {
@@ -442,9 +457,9 @@ class InteractionManager {
      * @private
      */
     async _handleInteractionError(interaction, error) {
-        logger.error(`Error in interaction handler for ${interaction.user.tag}:`, error);
+        this.logger.error(`Error in interaction handler for ${interaction.user.tag}:`, error);
 
-        if (kythia.sentry.dsn) {
+        if (this.kythiaConfig.sentry && this.kythiaConfig.sentry.dsn) {
             Sentry.withScope((scope) => {
                 scope.setUser({ id: interaction.user.id, username: interaction.user.tag });
                 scope.setTag('command', interaction.commandName);
@@ -458,21 +473,21 @@ class InteractionManager {
             });
         }
 
-        const ownerFirstId = kythia.owner.ids.split(',')[0].trim();
+        const ownerFirstId = this.kythiaConfig.owner.ids.split(',')[0].trim();
         const components = [
             new ContainerBuilder()
                 .setAccentColor(convertColor('Red', { from: 'discord', to: 'decimal' }))
-                .addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'common.error.generic')))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(await this.t(interaction, 'common.error.generic')))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addActionRowComponents(
                     new ActionRowBuilder().addComponents(
                         new ButtonBuilder()
                             .setStyle(ButtonStyle.Link)
-                            .setLabel(await t(interaction, 'common.error.button.join.support.server'))
-                            .setURL(kythia.settings.supportServer),
+                            .setLabel(await this.t(interaction, 'common.error.button.join.support.server'))
+                            .setURL(this.kythiaConfig.settings.supportServer),
                         new ButtonBuilder()
                             .setStyle(ButtonStyle.Link)
-                            .setLabel(await t(interaction, 'common.error.button.contact.owner'))
+                            .setLabel(await this.t(interaction, 'common.error.button.contact.owner'))
                             .setURL(`discord://-/users/${ownerFirstId}`)
                     )
                 ),
@@ -492,12 +507,17 @@ class InteractionManager {
                 });
             }
         } catch (e) {
-            logger.error('Failed to send interaction error message:', e);
+            this.logger.error('Failed to send interaction error message:', e);
         }
 
         try {
-            if (kythia.api.webhookErrorLogs && kythia.settings.webhookErrorLogs === true) {
-                const webhookClient = new WebhookClient({ url: kythia.api.webhookErrorLogs });
+            if (
+                this.kythiaConfig.api &&
+                this.kythiaConfig.api.webhookErrorLogs &&
+                this.kythiaConfig.settings &&
+                this.kythiaConfig.settings.webhookErrorLogs === true
+            ) {
+                const webhookClient = new WebhookClient({ url: this.kythiaConfig.api.webhookErrorLogs });
                 const errorEmbed = new EmbedBuilder()
                     .setColor('Red')
                     .setDescription(`## ❌ Error at ${interaction.user.tag}\n` + `\`\`\`${error.stack}\`\`\``)
@@ -506,7 +526,7 @@ class InteractionManager {
                 await webhookClient.send({ embeds: [errorEmbed] });
             }
         } catch (webhookErr) {
-            logger.error('Error sending interaction error webhook:', webhookErr);
+            this.logger.error('Error sending interaction error webhook:', webhookErr);
         }
     }
 }

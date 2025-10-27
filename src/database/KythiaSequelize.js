@@ -11,7 +11,6 @@
  */
 const { Sequelize } = require('sequelize');
 const logger = require('@coreHelpers/logger');
-const clc = require('cli-color');
 
 /**
  * 🧩 Initializes and returns a Sequelize instance for connecting to the MySQL database.

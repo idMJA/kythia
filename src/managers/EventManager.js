@@ -11,8 +11,6 @@
  * Manages event registration, execution order, and error handling for all events.
  */
 
-const logger = require('@coreHelpers/logger');
-
 class EventManager {
     /**
      * 🏗️ EventManager Constructor
@@ -20,10 +18,12 @@ class EventManager {
      * @param {Object} container - Dependency container
      * @param {Map} eventHandlers - Event handlers map from AddonManager
      */
-    constructor(client, container, eventHandlers) {
+    constructor({ client, container, eventHandlers }) {
         this.client = client;
         this.container = container;
         this.eventHandlers = eventHandlers;
+
+        this.logger = this.container.logger;
     }
 
     /**
@@ -42,13 +42,13 @@ class EventManager {
                             break;
                         }
                     } catch (error) {
-                        logger.error(`Error executing event handler for [${eventName}]:`, error);
+                        this.logger.error(`Error executing event handler for [${eventName}]:`, error);
                     }
                 }
             });
         }
 
-        logger.info(`✅ EventManager initialized with ${this.eventHandlers.size} event types`);
+        this.logger.info(`✅ EventManager initialized with ${this.eventHandlers.size} event types`);
     }
 
     /**

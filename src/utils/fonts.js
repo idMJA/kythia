@@ -7,7 +7,6 @@
  * @version 0.9.9-beta-rc.5
  */
 const { registerFont } = require('canvas');
-const logger = require('@coreHelpers/logger');
 const path = require('path');
 const fs = require('fs');
 
@@ -15,7 +14,7 @@ const fs = require('fs');
  * Loads and registers all fonts located under the core addon fonts directory.
  * Safely no-ops when the directory or font files are not present.
  */
-function loadFonts() {
+function loadFonts(logger) {
     const fontsDir = path.join(__dirname, '..', '..', 'addons', 'core', 'assets', 'fonts');
     if (!fs.existsSync(fontsDir)) {
         logger.warn(`🔠 Font directory not found: ${fontsDir}`);
@@ -47,4 +46,4 @@ function loadFonts() {
     }
 }
 
-module.exports = { loadFonts };
+module.exports = loadFonts;

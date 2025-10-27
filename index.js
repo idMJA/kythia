@@ -42,16 +42,68 @@
  * - If you add new aliases, update both `package.json` and ensure this file loads them first.
  */
 
-require('dotenv').config();
-require('./kythia.config.js');
+// require('dotenv').config();
+// require('./kythia.config.js');
 
+// require('module-alias/register');
+
+// const Kythia = require('./src/Kythia');
+
+// const kythiaInstance = new Kythia();
+// kythiaInstance.start();
+// require('dotenv').config();
+// const kythiaConfig = require('./kythia.config.js'); //
+// require('module-alias/register');
+
+// const logger = require('@coreHelpers/logger');
+// const translator = require('@coreHelpers/translator');
+
+// const Kythia = require('./src/Kythia');
+
+// const dependencies = {
+//     config: kythiaConfig,
+//     logger: logger,
+//     translator: translator,
+// };
+
+// try {
+//     const kythiaInstance = new Kythia(dependencies);
+
+//     kythiaInstance.start();
+// } catch (error) {
+//     const log = logger || console;
+//     log.error('🔥 FATAL ERROR during initialization:', error);
+//     process.exit(1);
+// }
+require('dotenv').config();
+const kythiaConfig = require('./kythia.config.js'); // <-- Kita ubah ini dikit
 require('module-alias/register');
 
+// 2. Siapkan (Load) Dependensi
+const logger = require('@coreHelpers/logger');
+const translator = require('@coreHelpers/translator');
+const { isTeam, isOwner } = require('@coreHelpers/discord');
+const ServerSetting = require('@coreModels/ServerSetting');
+const KythiaVoter = require('@coreModels/KythiaVoter');
+// 3. Load Kelas Utama
 const Kythia = require('./src/Kythia');
-const kythiaClient = require('./src/KythiaClient');
 
-const client = kythiaClient();
+const dependencies = {
+    config: kythiaConfig,
+    logger: logger,
+    translator: translator,
+    models: { ServerSetting, KythiaVoter },
+    helpers: {
+        discord: { isTeam, isOwner },
+    },
+};
 
-const kythiaInstance = new Kythia(client);
-kythiaInstance.client.kythia = kythiaInstance;
-kythiaInstance.start();
+// 5. Jalankan Aplikasi
+try {
+    const kythiaInstance = new Kythia(dependencies);
+    kythiaInstance.start();
+} catch (error) {
+    const log = logger || console;
+    log.error('🔥 FATAL ERROR during initialization:', error);
+    process.exit(1);
+}
