@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.10-beta](https://github.com/kythia/kythia/compare/v0.9.9-beta-rc.5...v0.9.10-beta) (2025-10-27)
+
+
+### 🔨 Fixed
+
+* a bunch of errors ([e5e6cae](https://github.com/kythia/kythia/commit/e5e6caea4cec3e963393cec4c9145b9f27bf21b5))
+* correct permission check logic for message handling to ensure proper automod system invocation ([3c14208](https://github.com/kythia/kythia/commit/3c142084b6ebeea0e09fec3fb65bbad150eb0e1b))
+
+
+### ✨ Added
+
+* add anti-all caps, anti-emoji spam, and anti-zalgo features to automod settings; ([d8ffb89](https://github.com/kythia/kythia/commit/d8ffb89f5a92d9b8261165b17003e3a2a3948011))
+* add audit log channel support for channel creation, deletion, member updates, and removals; refactor server settings to include auditLogChannelId ([629afe3](https://github.com/kythia/kythia/commit/629afe3d9bcd6c0d8e3fda881f7eeb4c2a7de73f))
+* add discord-arts dependency and update package-lock.json; refactor settings routes to improve input handling and validation ([55d232d](https://github.com/kythia/kythia/commit/55d232d47d3a35d959425bbe31b39aa9555db7be))
+* add global chat management messages to enhance user experience and provide feedback on server registration status ([ee55db8](https://github.com/kythia/kythia/commit/ee55db8e63445e77fe6dbecad7e42d8baddd8cec))
+* add health check delay to global chat configuration and implement sleep function for webhook health checks ([adc69f2](https://github.com/kythia/kythia/commit/adc69f2ec8dddab46a8fc4e11b7da7458feba289))
+* add health check schedule to global chat configuration and improve error logging in handleFailedGlobalChat ([bef021b](https://github.com/kythia/kythia/commit/bef021bbb9b4c5bf445e2ab5c4313b62c898de14))
+* add support for audit log channel in settings; update command structure and UI to accommodate new channel options ([b180dc9](https://github.com/kythia/kythia/commit/b180dc9d6ac65d5da253e56c917fb3e571de2492))
+* enhance command documentation for adventure, economy, fun, giveaway, setting, and utils commands with new subcommands and options ([5523107](https://github.com/kythia/kythia/commit/55231072b8dec790c60ca5de6c3e62bd2104daea))
+* enhance global chat logging with improved error handling and user feedback; update canonical link in main layout and add voting messages in language file ([dca82a5](https://github.com/kythia/kythia/commit/dca82a5c65cf9b9f2aee823b4fba61b4bd56a0c8))
+* handleFailedGlobalChat in globalchat addon to automaticly fix webhook ([9de8825](https://github.com/kythia/kythia/commit/9de882557e95585090eb4139686d31235568298f))
+* Implement EventManager, InteractionManager, and ShutdownManager for enhanced event handling and graceful shutdown procedures ([721d989](https://github.com/kythia/kythia/commit/721d989961b8e74a4228cbc7a086491d5b810533))
+* implement GlobalChat model and enhance global chat command handling; add database existence check and improve webhook health checks ([c6b964b](https://github.com/kythia/kythia/commit/c6b964b8e7114a73bdb1f513cf661afe6a31d8fb))
+* update landing page with new Global Chat feature and enhance existing content layout ([5645cd0](https://github.com/kythia/kythia/commit/5645cd0c64e79e908995cf61f64185333b281353))
+
+
+### 🔧 Changed
+
+* big change key language structure to get nested. (not tested all yet) ([87e4199](https://github.com/kythia/kythia/commit/87e4199d291546a6bbdfd729be08f2ff04fcb762))
+* **core:** Implement Dependency Injection architecture ✨ ([d24d5fc](https://github.com/kythia/kythia/commit/d24d5fc93126543f09147bd92b3a999da6a3072e))
+* remove guildId from AFK data handling in commands and database model, make it global ([962f3f1](https://github.com/kythia/kythia/commit/962f3f18474d48371210c4301e37c83ce2833d59))
+* remove unused utility files and clean up codebase by deleting obsolete modules ([d9710fa](https://github.com/kythia/kythia/commit/d9710fa6f02744c99006c09bb88af705f8965829))
+* restructure Kythia initialization and dependency management; remove KythiaManager and enhance error handling ([877be6b](https://github.com/kythia/kythia/commit/877be6bedb7f07137188630eea38ea02bca88fb4))
+* update UI components for improved server name display and branding ([1b3e263](https://github.com/kythia/kythia/commit/1b3e263d1fbcf389f8dddac266757f9716e5038d))
+
 ### [0.9.9-beta-rc.5](https://github.com/kythia/kythia/compare/v0.9.9-beta-rc.4...v0.9.9-beta-rc.5) (2025-10-20)
 
 
