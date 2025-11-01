@@ -5,20 +5,20 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, PermissionFlagsBits } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('unban')
-        .setDescription('🔓 Unbans a user from the server.')
-        .addStringOption((option) => option.setName('userid').setDescription('User ID to unban').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('unban')
+            .setDescription('🔓 Unbans a user from the server.')
+            .addStringOption((option) => option.setName('userid').setDescription('User ID to unban').setRequired(true)),
     permissions: PermissionFlagsBits.BanMembers,
     botPermissions: PermissionFlagsBits.BanMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
         const userId = interaction.options.getString('userid');
 

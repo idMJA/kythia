@@ -5,22 +5,22 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
-const ServerSetting = require('@coreModels/ServerSetting');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('kick')
-        .setDescription('⚠️ Kick a user from the server.')
-        .addUserOption((option) => option.setName('user').setDescription('User to kick').setRequired(true))
-        .addStringOption((option) => option.setName('reason').setDescription('Reason for kick (optional)').setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('kick')
+            .setDescription('⚠️ Kick a user from the server.')
+            .addUserOption((option) => option.setName('user').setDescription('User to kick').setRequired(true))
+            .addStringOption((option) => option.setName('reason').setDescription('Reason for kick (optional)').setRequired(false)),
     permissions: PermissionFlagsBits.KickMembers,
     botPermissions: PermissionFlagsBits.KickMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers, models } = container;
+        const { embedFooter } = helpers.discord;
+        const { ServerSetting } = models;
+
         await interaction.deferReply();
         const setting = ServerSetting.getCache({ guildId: interaction.guild.id });
         const user = interaction.options.getUser('user');

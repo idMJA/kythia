@@ -5,21 +5,21 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('ban')
-        .setDescription('⚠️ Ban a user from the server.')
-        .addUserOption((option) => option.setName('user').setDescription('User to ban').setRequired(true))
-        .addStringOption((option) => option.setName('reason').setDescription('Reason for ban (optional)').setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('ban')
+            .setDescription('⚠️ Ban a user from the server.')
+            .addUserOption((option) => option.setName('user').setDescription('User to ban').setRequired(true))
+            .addStringOption((option) => option.setName('reason').setDescription('Reason for ban (optional)').setRequired(false)),
     permissions: PermissionFlagsBits.BanMembers,
     botPermissions: PermissionFlagsBits.BanMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply();
 
         const user = interaction.options.getUser('user');

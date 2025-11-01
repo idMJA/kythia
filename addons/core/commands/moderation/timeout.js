@@ -5,21 +5,21 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('timeout')
-        .setDescription('⏰ Puts a user in timeout for a specified duration.')
-        .addUserOption((option) => option.setName('user').setDescription('User to timeout').setRequired(true))
-        .addIntegerOption((option) => option.setName('duration').setDescription('Duration in seconds').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('timeout')
+            .setDescription('⏰ Puts a user in timeout for a specified duration.')
+            .addUserOption((option) => option.setName('user').setDescription('User to timeout').setRequired(true))
+            .addIntegerOption((option) => option.setName('duration').setDescription('Duration in seconds').setRequired(true)),
     permissions: PermissionFlagsBits.ModerateMembers,
     botPermissions: PermissionFlagsBits.ModerateMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
 
         const user = interaction.options.getUser('user');

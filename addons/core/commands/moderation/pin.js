@@ -5,27 +5,20 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const {
-    SlashCommandBuilder,
-    EmbedBuilder,
-    PermissionFlagsBits,
-    InteractionContextType,
-    ContextMenuCommandBuilder,
-    ApplicationCommandType,
-} = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    slashCommand: new SlashCommandBuilder()
-        .setName('pin')
-        .setDescription('📌 Pins a message in the channel.')
-        .addStringOption((option) => option.setName('message_id').setDescription('ID of the message to pin').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.PinMessages)
-        .setContexts(InteractionContextType.Guild),
+    slashCommand: (subcommand) =>
+        subcommand
+            .setName('pin')
+            .setDescription('📌 Pins a message in the channel.')
+            .addStringOption((option) => option.setName('message_id').setDescription('ID of the message to pin').setRequired(true)),
     permissions: PermissionFlagsBits.PinMessages,
     botPermissions: PermissionFlagsBits.PinMessages,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
         const messageId = interaction.options.getString('message_id');
 

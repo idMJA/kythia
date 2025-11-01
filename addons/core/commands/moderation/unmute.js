@@ -5,20 +5,20 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('unmute')
-        .setDescription('🔊 Unmutes a user in a voice channel.')
-        .addUserOption((option) => option.setName('user').setDescription('User to unmute').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.MuteMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('unmute')
+            .setDescription('🔊 Unmutes a user in a voice channel.')
+            .addUserOption((option) => option.setName('user').setDescription('User to unmute').setRequired(true)),
     permissions: PermissionFlagsBits.MuteMembers,
     botPermissions: PermissionFlagsBits.MuteMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
         const user = interaction.options.getUser('user');
 

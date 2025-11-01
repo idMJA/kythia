@@ -5,22 +5,21 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const User = require('@coreModels/User');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('warnings')
-        .setDescription('🔖 Show user warnings.') // This is not translated, but Discord slash command descriptions are not dynamic
-        .addUserOption((option) => option.setName('user').setDescription('User to check').setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('warnings')
+            .setDescription('🔖 Show user warnings.')
+            .addUserOption((option) => option.setName('user').setDescription('User to check').setRequired(false)),
 
     permissions: PermissionFlagsBits.ModerateMembers,
     botPermissions: PermissionFlagsBits.ModerateMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers, models } = container;
+        const { embedFooter } = helpers.discord;
+        const { User } = models;
         await interaction.deferReply({ ephemeral: true });
 
         const user = interaction.options.getUser('user') || interaction.user;

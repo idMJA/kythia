@@ -5,20 +5,20 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('lock')
-        .setDescription('🔒 Locks a channel to prevent messages.')
-        .addChannelOption((option) => option.setName('channel').setDescription('Channel to lock').setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('lock')
+            .setDescription('🔒 Locks a channel to prevent messages.')
+            .addChannelOption((option) => option.setName('channel').setDescription('Channel to lock').setRequired(false)),
     permissions: PermissionFlagsBits.ManageChannels,
     botPermissions: PermissionFlagsBits.ManageChannels,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
 
         const channel = interaction.options.getChannel('channel') || interaction.channel;

@@ -5,28 +5,28 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('role')
-        .setDescription('⭕ Add or remove a role from a user.')
-        .addUserOption((option) => option.setName('user').setDescription('The user to modify').setRequired(true))
-        .addRoleOption((option) => option.setName('role').setDescription('The role to add or remove').setRequired(true))
-        .addStringOption((option) =>
-            option
-                .setName('action')
-                .setDescription('Choose whether to add or remove the role.')
-                .setRequired(true)
-                .addChoices({ name: 'Add', value: 'add' }, { name: 'Remove', value: 'remove' })
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('role')
+            .setDescription('⭕ Add or remove a role from a user.')
+            .addUserOption((option) => option.setName('user').setDescription('The user to modify').setRequired(true))
+            .addRoleOption((option) => option.setName('role').setDescription('The role to add or remove').setRequired(true))
+            .addStringOption((option) =>
+                option
+                    .setName('action')
+                    .setDescription('Choose whether to add or remove the role.')
+                    .setRequired(true)
+                    .addChoices({ name: 'Add', value: 'add' }, { name: 'Remove', value: 'remove' })
+            ),
     permissions: PermissionFlagsBits.ManageRoles,
     botPermissions: PermissionFlagsBits.ManageRoles,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
 
         const user = interaction.options.getUser('user');

@@ -5,20 +5,20 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('mute')
-        .setDescription('🔇 Mute a user in a voice channel.')
-        .addUserOption((option) => option.setName('user').setDescription('User to mute').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.MuteMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('mute')
+            .setDescription('🔇 Mute a user in a voice channel.')
+            .addUserOption((option) => option.setName('user').setDescription('User to mute').setRequired(true)),
     permissions: PermissionFlagsBits.MuteMembers,
     botPermissions: PermissionFlagsBits.MuteMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
 
         const user = interaction.options.getUser('user');

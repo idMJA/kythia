@@ -5,25 +5,22 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const User = require('@coreModels/User');
-const ServerSetting = require('@coreModels/ServerSetting');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
-const logger = require('@coreHelpers/logger');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('warn')
-        .setDescription('⚠️ Warn a user.')
-        .addUserOption((option) => option.setName('user').setDescription('User to warn').setRequired(true))
-        .addStringOption((option) => option.setName('reason').setDescription('Reason for the warning').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('warn')
+            .setDescription('⚠️ Warn a user.')
+            .addUserOption((option) => option.setName('user').setDescription('User to warn').setRequired(true))
+            .addStringOption((option) => option.setName('reason').setDescription('Reason for the warning').setRequired(true)),
 
     permissions: PermissionFlagsBits.ModerateMembers,
     botPermissions: PermissionFlagsBits.ModerateMembers,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers, models, logger } = container;
+        const { embedFooter } = helpers.discord;
+        const { User, ServerSetting } = models;
         await interaction.deferReply({ ephemeral: true });
 
         const setting = await ServerSetting.getCache({ guildId: interaction.guild.id });

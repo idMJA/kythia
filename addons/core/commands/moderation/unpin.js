@@ -5,20 +5,20 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { embedFooter } = require('@coreHelpers/discord');
-const { t } = require('@coreHelpers/translator');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('unpin')
-        .setDescription('📌 Unpins a message in the channel.')
-        .addStringOption((option) => option.setName('message_id').setDescription('ID of the message to unpin').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('unpin')
+            .setDescription('📌 Unpins a message in the channel.')
+            .addStringOption((option) => option.setName('message_id').setDescription('ID of the message to unpin').setRequired(true)),
     permissions: PermissionFlagsBits.ManageMessages,
     botPermissions: PermissionFlagsBits.ManageMessages,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t, helpers } = container;
+        const { embedFooter } = helpers.discord;
+
         await interaction.deferReply({ ephemeral: true });
         const messageId = interaction.options.getString('message_id');
 

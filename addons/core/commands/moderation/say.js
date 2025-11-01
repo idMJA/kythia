@@ -5,19 +5,19 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { t } = require('@coreHelpers/translator');
+const { PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('say')
-        .setDescription('💬 Make the bot send a message')
-        .addStringOption((option) => option.setName('message').setDescription('Message to send').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('say')
+            .setDescription('💬 Make the bot send a message')
+            .addStringOption((option) => option.setName('message').setDescription('Message to send').setRequired(true)),
     permissions: PermissionFlagsBits.ManageGuild,
     botPermissions: PermissionFlagsBits.ManageGuild,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t } = container;
+
         await interaction.deferReply({ ephemeral: true });
 
         const message = interaction.options.getString('message');

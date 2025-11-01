@@ -6,29 +6,30 @@
  * @version 0.9.11-beta
  */
 const {
-    SlashCommandBuilder,
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
     ComponentType,
     PermissionFlagsBits,
-    InteractionContextType,
 } = require('discord.js');
 const { t } = require('@coreHelpers/translator');
 const logger = require('@coreHelpers/logger');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('clear')
-        .setDescription('🗑️ Delete messages from a channel.')
-        .addIntegerOption((option) => option.setName('amount').setDescription('Amount of messages to delete (0 = all)').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('clear')
+            .setDescription('🗑️ Delete messages from a channel.')
+            .addIntegerOption((option) =>
+                option.setName('amount').setDescription('Amount of messages to delete (0 = all)').setRequired(true)
+            ),
 
     permissions: PermissionFlagsBits.ManageMessages,
     botPermissions: PermissionFlagsBits.ManageMessages,
     async execute(interaction, container) {
+        const { t, logger } = container;
+
         const amount = interaction.options.getInteger('amount');
 
         if (amount === 0) {

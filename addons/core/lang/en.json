@@ -696,7 +696,6 @@
                         "invalid": "❌ The selected channel must be a category.",
                         "set": "✅ Server stats category set to {category}."
                     }
-                    
                 },
                 "embed": {
                     "title": {
@@ -1025,6 +1024,49 @@
                     "format": "## 📢 Announcement:\n{message}"
                 },
                 "success": "✅ | Announcement sent in **{channel}**."
+            },
+            "autosetup": {
+                "embed": {
+                    "cleaning": {
+                        "title": "Cleaning Old Rules",
+                        "desc": "Looking for and deleting previous AutoMod rules created by Kythia..."
+                    },
+                    "installing": {
+                        "title": "Installing AutoMod Rules",
+                        "desc": "Installing {total} core rules. This may take some time due to retries..."
+                    },
+                    "rules": {
+                        "badwords": "Block Bad Words (All Presets)",
+                        "suspectedspam": "Block Suspected Spam",
+                        "massmentions": "Block Mass Mentions (Combined)",
+                        "invites": "Block Discord Invites",
+                        "scamlinks": "Block Scam & Phishing Links",
+                        "caps": "Block Excessive Caps"
+                    },
+                    "final": {
+                        "success": {
+                            "title": "Successfully Installed {total} Rules!",
+                            "desc": "Your server is now protected by Kythia."
+                        },
+                        "failed": {
+                            "title": "Setup Completed With {count} Failures!",
+                            "desc": "One or more rules failed to be installed even after 10 retries."
+                        },
+                        "installed": {
+                            "title": "Successfully Installed ({count})",
+                            "empty": "None."
+                        },
+                        "failedrules": {
+                            "title": "Failed to Install ({count})",
+                            "footer": "Run this command again to attempt to reinstall the failed rules."
+                        },
+                        "footer": "Kythia AutoMod System"
+                    },
+                    "error": {
+                        "title": "❌ Error",
+                        "desc": "An error occurred while cleaning old AutoMod rules. Please try again later."
+                    }
+                }
             },
             "ban": {
                 "default": {

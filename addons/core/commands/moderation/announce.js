@@ -6,19 +6,19 @@
  * @version 0.9.11-beta
  */
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const { t } = require('@coreHelpers/translator');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('announce')
-        .setDescription('📢 Send an announcement to a specified channel.')
-        .addChannelOption((option) => option.setName('channel').setDescription('Channel to send the announcement').setRequired(true))
-        .addStringOption((option) => option.setName('message').setDescription('Announcement message').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
-        .setContexts(InteractionContextType.Guild),
+    data: (subcommand) =>
+        subcommand
+            .setName('announce')
+            .setDescription('📢 Send an announcement to a specified channel.')
+            .addChannelOption((option) => option.setName('channel').setDescription('Channel to send the announcement').setRequired(true))
+            .addStringOption((option) => option.setName('message').setDescription('Announcement message').setRequired(true)),
     permissions: PermissionFlagsBits.ManageMessages,
     botPermissions: PermissionFlagsBits.ManageMessages,
-    async execute(interaction) {
+    async execute(interaction, container) {
+        const { t } = container;
+
         await interaction.deferReply();
         const channel = interaction.options.getChannel('channel');
         const message = interaction.options.getString('message');
