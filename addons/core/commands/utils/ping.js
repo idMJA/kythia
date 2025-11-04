@@ -160,15 +160,18 @@ async function getRedisPings(container) {
     return nodes;
 }
 
-async function buildPingEmbed(interaction, container) {
+async function buildPingEmbed(interaction, container, initialLatencies = null) {
     const { t, kythiaConfig, helpers } = container;
     const { convertColor } = helpers.color;
-    const botLatency = Math.max(0, Date.now() - interaction.createdTimestamp);
-    const apiLatency = Math.round(interaction.client.ws.ping);
-    const lavalinkNodes = await getLavalinkNodesPings(interaction.client);
-    const dbPingInfo = await getDbPing(container);
 
-    const redisNodes = await getRedisPings(container);
+    const botLatency = initialLatencies ? initialLatencies.bot : Math.max(0, Date.now() - interaction.createdTimestamp);
+    const apiLatency = initialLatencies ? initialLatencies.api : Math.round(interaction.client.ws.ping);
+
+    const [lavalinkNodes, dbPingInfo, redisNodes] = await Promise.all([
+        getLavalinkNodesPings(interaction.client),
+        getDbPing(container),
+        getRedisPings(container),
+    ]);
 
     const embedContainer = new ContainerBuilder().setAccentColor(convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' }));
 
@@ -178,15 +181,20 @@ async function buildPingEmbed(interaction, container) {
     embedContainer.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(`**${await t(interaction, 'core.utils.ping.field.bot.latency')}**\n\`\`\`${botLatency}ms\`\`\``)
     );
-
     embedContainer.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(`**${await t(interaction, 'core.utils.ping.field.api.latency')}**\n\`\`\`${apiLatency}ms\`\`\``)
     );
-
     embedContainer.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `**${await t(interaction, 'core.utils.ping.field.db.latency')}**\n\`\`\`${dbPingInfo.status === 'connected' ? dbPingInfo.ping + 'ms' : dbPingInfo.status === 'not_configured' ? 'Not Configured' : dbPingInfo.status === 'error' ? 'Error' : 'Unknown'}\`\`\`` +
-                (dbPingInfo.status === 'error' && dbPingInfo.error ? `\n\`\`\`Error: ${dbPingInfo.error}\`\`\`` : '')
+            `**${await t(interaction, 'core.utils.ping.field.db.latency')}**\n\`\`\`${
+                dbPingInfo.status === 'connected'
+                    ? dbPingInfo.ping + 'ms'
+                    : dbPingInfo.status === 'not_configured'
+                      ? 'Not Configured'
+                      : dbPingInfo.status === 'error'
+                        ? 'Error'
+                        : 'Unknown'
+            }\`\`\`` + (dbPingInfo.status === 'error' && dbPingInfo.error ? `\n\`\`\`Error: ${dbPingInfo.error}\`\`\`` : '')
         )
     );
 
@@ -197,7 +205,6 @@ async function buildPingEmbed(interaction, container) {
         for (const node of redisNodes) {
             let statusEmoji = '❓';
             let pingText = 'N/A';
-
             if (node.status === 'active') {
                 statusEmoji = '`✅`';
                 if (node.ping === -2) pingText = 'Ping Failed';
@@ -210,7 +217,6 @@ async function buildPingEmbed(interaction, container) {
                 statusEmoji = '`❌`';
                 pingText = 'Failed';
             }
-
             embedContainer.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(`${statusEmoji} **${node.name}**\n\`\`\`${pingText}\`\`\``)
             );
@@ -222,11 +228,9 @@ async function buildPingEmbed(interaction, container) {
         embedContainer.addTextDisplayComponents(
             new TextDisplayBuilder().setContent(`**${await t(interaction, 'core.utils.ping.field.lavalink.nodes')}**`)
         );
-
         for (const node of lavalinkNodes) {
             let statusEmoji = '❓';
             let pingText = 'N/A';
-
             if (node.status === 'operational') {
                 statusEmoji = '`🟢`';
                 pingText = `${node.ping}ms`;
@@ -240,9 +244,7 @@ async function buildPingEmbed(interaction, container) {
                 statusEmoji = '`❌`';
                 pingText = 'Error';
             }
-
             const playersText = node.players > 0 ? ` (${node.players} players)` : '';
-
             embedContainer.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(`${statusEmoji} **${node.name}**\n\`\`\`${pingText}${playersText}\`\`\``)
             );
@@ -250,18 +252,22 @@ async function buildPingEmbed(interaction, container) {
     }
 
     embedContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
-
     embedContainer.addActionRowComponents(
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('ping_refresh')
                 .setLabel(await t(interaction, 'core.utils.ping.button.refresh'))
                 .setStyle(ButtonStyle.Secondary)
+                .setDisabled(false)
         )
     );
     embedContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
     embedContainer.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(await t(interaction, 'common.container.footer', { username: interaction.client.user.username }))
+        new TextDisplayBuilder().setContent(
+            await t(interaction, 'common.container.footer', {
+                username: interaction.client.user.username,
+            })
+        )
     );
 
     return { embedContainer, botLatency, apiLatency, lavalinkNodes, dbPingInfo, redisNodes };
@@ -273,13 +279,61 @@ module.exports = {
         .setDescription("🔍 Checks the bot's, Discord API's, database and cache/redis connection speed."),
     aliases: ['p', 'pong', '🏓'],
     async execute(interaction, container) {
-        const { embedContainer, botLatency, apiLatency } = await buildPingEmbed(interaction, container);
+        const { t, kythiaConfig, helpers } = container;
+        const { convertColor } = helpers.color;
+
+        const botLatency = Math.max(0, Date.now() - interaction.createdTimestamp);
+        const apiLatency = Math.round(interaction.client.ws.ping);
+
+        const loadingEmbed = new ContainerBuilder()
+            .setAccentColor(convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' }))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'core.utils.ping.embed.title')))
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(
+                    `**${await t(interaction, 'core.utils.ping.field.bot.latency')}**\n\`\`\`${botLatency}ms\`\`\``
+                )
+            )
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(
+                    `**${await t(interaction, 'core.utils.ping.field.api.latency')}**\n\`\`\`${apiLatency}ms\`\`\``
+                )
+            )
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'core.utils.ping.loading')))
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addActionRowComponents(
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('ping_refresh')
+                        .setLabel(await t(interaction, 'core.utils.ping.button.refresh'))
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(true)
+                )
+            )
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(
+                    await t(interaction, 'common.container.footer', {
+                        username: interaction.client.user.username,
+                    })
+                )
+            );
 
         const sent = await interaction.reply({
             content: ' ',
-            components: [embedContainer],
+            components: [loadingEmbed],
             flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2,
             fetchReply: true,
+        });
+
+        const { embedContainer } = await buildPingEmbed(interaction, container, {
+            bot: botLatency,
+            api: apiLatency,
+        });
+
+        await interaction.editReply({
+            components: [embedContainer],
         });
 
         const collector = sent.createMessageComponentCollector({
@@ -288,13 +342,18 @@ module.exports = {
         });
 
         collector.on('collect', async (i) => {
-            // Defer the update so Discord knows we are processing the button interaction (like deferReply for buttons)
             await i.deferUpdate();
-            const refreshed = await buildPingEmbed(i, container);
+
+            const botLatency = Math.max(0, Date.now() - i.createdTimestamp);
+            const apiLatency = Math.round(i.client.ws.ping);
+
+            const refreshed = await buildPingEmbed(i, container, {
+                bot: botLatency,
+                api: apiLatency,
+            });
+
             await i.editReply({
                 components: [refreshed.embedContainer],
-                content: ' ',
-                flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2,
             });
         });
 

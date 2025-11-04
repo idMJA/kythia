@@ -145,6 +145,7 @@
             },
             "ping": {
                 "fetching": "🏓 Pinging...",
+                "loading": "`⌛` Pinging Database, Cache & Lavalink...",
                 "embed": {
                     "title": "## 🏓 Pong!"
                 },
