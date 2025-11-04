@@ -25,7 +25,7 @@ async function reloadLavalinkNodes(client) {
     logger.info('All old nodes have been cleared.');
 
     const newNodes = (kythia.addons.music.lavalink.hosts || 'localhost').split(',').map((host, i) => ({
-        name: `kythia-${i}`,
+        name: `Kythia Nodes #${i + 1}`,
         host: host.trim(),
         port: parseInt((kythia.addons.music.lavalink.ports || '2333').split(',')[i] || '2333', 10),
         password: (kythia.addons.music.lavalink.passwords || 'youshallnotpass').split(',')[i] || 'youshallnotpass',

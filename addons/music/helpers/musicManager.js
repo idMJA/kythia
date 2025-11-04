@@ -127,7 +127,7 @@ async function initializeMusicManager(bot) {
     }
 
     const nodes = (kythia.addons.music.lavalink.hosts || 'localhost').split(',').map((host, i) => ({
-        name: `Kythia Nodes #${i}`,
+        name: `Kythia Nodes #${i + 1}`,
         host: host.trim(),
         port: parseInt((kythia.addons.music.lavalink.ports || '2333').split(',')[i] || '2333', 10),
         password: (kythia.addons.music.lavalink.passwords || 'youshallnotpass').split(',')[i] || 'youshallnotpass',
@@ -165,7 +165,9 @@ async function initializeMusicManager(bot) {
         } else {
             // Pass to previous handlers
             for (const prev of prevListener) {
-                try { prev(reason, promise); } catch (err) {}
+                try {
+                    prev(reason, promise);
+                } catch (err) {}
             }
         }
     }

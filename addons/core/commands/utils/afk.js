@@ -16,12 +16,12 @@ module.exports = {
         .setContexts(InteractionContextType.Guild),
     async execute(interaction, container) {
         const { t, models } = container;
-        const { AFK } = models;
+        const { UserAFK } = models;
 
         const reason = interaction.options.getString('reason') || (await t(interaction, 'core.utils.afk.no.reason'));
 
         try {
-            const afkData = await AFK.getCache({
+            const afkData = await UserAFK.getCache({
                 userId: interaction.user.id,
             });
 
@@ -33,7 +33,7 @@ module.exports = {
                 return;
             }
 
-            await AFK.create(
+            await UserAFK.create(
                 {
                     userId: interaction.user.id,
                     reason: reason,
