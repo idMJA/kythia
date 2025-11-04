@@ -9,15 +9,20 @@
 const { AuditLogEvent, EmbedBuilder } = require('discord.js');
 const ServerSetting = require('@coreModels/ServerSetting');
 const convertColor = require('@kenndeclouv/kythia-core').utils.color;
+const { rolePrefix } = require('../helpers');
 
 module.exports = async (bot, oldRole, newRole) => {
     if (!newRole.guild) return;
 
     try {
-        const settings = await ServerSetting.getCache({ guildId: newRole.guild.id });
-        if (!settings || !settings.auditLogChannelId) return;
+        const setting = await ServerSetting.getCache({ guildId: newRole.guild.id });
+        if (!setting || !setting.auditLogChannelId) return;
 
-        const logChannel = await newRole.guild.channels.fetch(settings.auditLogChannelId).catch(() => null);
+        if (setting.rolePrefixOn) {
+            await rolePrefix(member.guild);
+        }
+
+        const logChannel = await newRole.guild.channels.fetch(setting.auditLogChannelId).catch(() => null);
         if (!logChannel || !logChannel.isTextBased()) return;
 
         const audit = await newRole.guild.fetchAuditLogs({
