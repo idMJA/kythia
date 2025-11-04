@@ -9,7 +9,7 @@
 const { ActivityType } = require('discord.js');
 
 function setBotPresence(client) {
-    const { logger, kythiaConfig } = client.container.logger;
+    const { logger, kythiaConfig } = client.container;
     if (!client.user) {
         logger.error('❌ client.user is undefined, cannot set presence.');
         return;
