@@ -25,6 +25,7 @@ const {
 const PlaylistTrack = require('../database/models/PlaylistTrack');
 const Playlist = require('../database/models/Playlist');
 const Favorite = require('../database/models/Favorite');
+const Music247 = require('../database/models/Music247');
 const convertColor = require('kythia-core').utils.color;
 const { t } = require('@coreHelpers/translator');
 const { customFilter } = require('poru');
@@ -2113,15 +2114,54 @@ async function _handleFavoriteRemove(interaction) {
  */
 async function handle247(interaction, player) {
     await interaction.deferReply();
+    const { client, member, guild, channel } = interaction;
 
-    if (!player) {
-        const embed = new EmbedBuilder().setColor('Red').setDescription(await t(interaction, 'music.helpers.handlers.247.player.notfound'));
-        return interaction.editReply({ embeds: [embed] });
+    let playerInstance = player;
+    if (!playerInstance) {
+        if (!member.voice.channel) {
+            const embed = new EmbedBuilder().setColor('Red').setDescription(await t(interaction, 'music.errors.no_voice_channel'));
+            return interaction.editReply({ embeds: [embed] });
+        }
+        playerInstance = client.poru.createConnection({
+            guildId: guild.id,
+            voiceChannel: member.voice.channel.id,
+            textChannel: channel.id,
+            deaf: true,
+        });
+
+        playerInstance._247 = false;
     }
 
-    player._247 = !player._247;
+    const newState = !playerInstance._247;
+    playerInstance._247 = newState;
 
-    let msgKey = player._247 ? 'music.helpers.handlers.247.enabled' : 'music.helpers.handlers.247.disabled';
+    let msgKey;
+
+    if (newState === true) {
+        try {
+            await Music247.findOrCreateWithCache({
+                where: { guildId: guild.id },
+                defaults: {
+                    guildId: guild.id,
+                    textChannelId: playerInstance.textChannel,
+                    voiceChannelId: playerInstance.voiceChannel,
+                },
+            });
+            msgKey = 'music.helpers.handlers.247.enabled';
+        } catch (dbErr) {
+            logger.error('Failed to save 24/7 to DB:', dbErr);
+            msgKey = 'music.helpers.handlers.247.db_error';
+        }
+    } else {
+        try {
+            await Music247.destroy({ where: { guildId: guild.id } });
+            msgKey = 'music.helpers.handlers.247.disabled';
+        } catch (dbErr) {
+            logger.error('Failed to remove 24/7 from DB:', dbErr);
+            msgKey = 'music.helpers.handlers.247.db_error';
+        }
+    }
+
 
     const embed = new EmbedBuilder().setColor(kythia.bot.color).setDescription(await t(interaction, msgKey));
     await interaction.editReply({ embeds: [embed] });
