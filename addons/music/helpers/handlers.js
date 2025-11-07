@@ -226,13 +226,20 @@ async function handleSkip(interaction, player) {
 /**
  * ⏹️ Handles the 'stop' subcommand.
  * Stops playback and clears the queue.
+ * This will trigger the 'queueEnd' event, which will then
+ * handle disconnecting or staying based on 24/7 mode.
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  * @param {object} player - The music player instance.
  */
 async function handleStop(interaction, player) {
     player.autoplay = false;
     player.manualStop = true;
-    player.destroy();
+    player.trackRepeat = false;
+    player.queueRepeat = false;
+
+    player.queue.clear();
+    player.skip();
+
     const embed = new EmbedBuilder().setColor('Red').setDescription(await t(interaction, 'music.helpers.handlers.music.stopped'));
     return interaction.reply({ embeds: [embed] });
 }
@@ -2161,7 +2168,6 @@ async function handle247(interaction, player) {
             msgKey = 'music.helpers.handlers.247.db_error';
         }
     }
-
 
     const embed = new EmbedBuilder().setColor(kythia.bot.color).setDescription(await t(interaction, msgKey));
     await interaction.editReply({ embeds: [embed] });

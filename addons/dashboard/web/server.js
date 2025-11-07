@@ -175,6 +175,7 @@ module.exports = (bot) => {
     });
 
     server.listen(PORT, '0.0.0.0', () => {
-        logger.info(`🚀 Dashboard running on ${kythiaConfig.addons.dashboard.url}`);
+        logger.info(`🚀 Dashboard server listening on 0.0.0.0:${PORT}`);
+        logger.info(`🌐 Public URL (check Discord Dev Portal): ${kythiaConfig.addons.dashboard.url}`);
     });
 };

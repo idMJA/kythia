@@ -282,6 +282,10 @@ async function updateNowPlayingUI(player) {
             new TextDisplayBuilder().setContent(await t(channel, 'common.container.footer', { username: client.user.username }))
         );
 
+        if (player.state !== 'PLAYING' || !player.currentTrack) {
+            return;
+        }
+
         await player.nowPlayingMessage.edit({
             components: [updatedContainer],
             flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2,

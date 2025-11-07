@@ -11,9 +11,11 @@ const { cleanupUserCache } = require('./helpers/index.js');
 const setupTopGGPoster = require('./tasks/topggPoster.js');
 const { userCache } = require('./helpers/automod.js');
 const { runStatsUpdater } = require('./helpers/stats.js');
+const loadFonts = require('./helpers/fonts.js');
 
 const initialize = (bot) => {
-    const logger = bot.container.logger;
+    const container = bot.client.container;
+    const { logger } = container;
     const summary = [];
 
     try {
@@ -40,6 +42,9 @@ const initialize = (bot) => {
     cron.schedule('*/5 * * * *', () => runStatsUpdater(bot.client));
     summary.push('  └─ Cron: cleanup user cache (every 5 minutes)');
 
+    bot.addClientReadyHook(() => {
+        loadFonts(logger);
+    });
     return summary;
 };
 

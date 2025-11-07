@@ -251,7 +251,7 @@ function loadKythiaConfig() {
                  * use lavalink version 4.1.1
                  * with plugin:
                  * - lavasrc-plugin-4.8.1
-                 * - youtube-plugin-1.15.0 (with yt-cipher)
+                 * - youtube-plugin-1.16.0 (with yt-cipher)
                  * - lavasearch-plugin-1.0.0
                  * - sponsorblock-plugin-3.0.1
                  */
