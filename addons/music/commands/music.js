@@ -243,7 +243,7 @@ module.exports = {
                 .setName('seek')
                 .setDescription('⏩ Seeks to a specific time in the current song.')
                 .addIntegerOption((option) =>
-                    option.setName('time').setDescription('The time to seek to in seconds. eg. 10 30').setRequired(true).setMinValue(0)
+                    option.setName('time').setDescription('The time to seek to. eg. 10, 2:30, 1:20:30').setRequired(true).setMinValue(0)
                 )
         )
         .addSubcommandGroup((subcommandGroup) =>

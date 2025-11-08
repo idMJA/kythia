@@ -364,6 +364,7 @@ async function initializeMusicManager(bot) {
         player.buttonCollector = null;
         player._247 = false;
         player._latestSuggestionRow = null;
+        player.disconnectTimeout = null;
     });
 
     client.poru.on('nodeConnect', (node) => logger.info(`🎚️  Node "${node.name}" connected.`));
@@ -381,6 +382,10 @@ async function initializeMusicManager(bot) {
      * ▶️ Handles when a new track starts playing.
      */
     client.poru.on('trackStart', async (player, track) => {
+        if (player.disconnectTimeout) {
+            clearTimeout(player.disconnectTimeout);
+            player.disconnectTimeout = null;
+        }
         try {
             const voiceChannel = client.channels.cache.get(player.voiceChannel);
 
@@ -743,6 +748,8 @@ async function initializeMusicManager(bot) {
             }
         }
 
+        if (autoplaySucceeded) return; 
+
         if (player._247) {
             logger.info(`🎵 [24/7] Queue ended for ${player.guildId}, staying idle.`);
             if (player.updateInterval) clearInterval(player.updateInterval);
@@ -750,16 +757,38 @@ async function initializeMusicManager(bot) {
             const voiceChannel = client.channels.cache.get(player.voiceChannel);
             try {
                 setVoiceChannelStatus(voiceChannel, 'idle');
-            } catch (e) {
-                /* ... */
-            }
+            } catch (e) {}
 
             let lastTrack = player.currentTrack || player._autoplayReference;
             await shutdownPlayerUI(player, lastTrack, client);
+
+            player.nowPlayingMessage = null;
         } else {
-            if (player && !player.destroyed) {
+            let lastTrack = player.currentTrack || player._autoplayReference;
+            await shutdownPlayerUI(player, lastTrack, client);
+            player.nowPlayingMessage = null;
+
+            const IDLE_TIMEOUT_MS = 15000;
+
+            if (player.disconnectTimeout) clearTimeout(player.disconnectTimeout);
+
+            player.disconnectTimeout = setTimeout(async () => {
+                if (player.queue.length > 0) {
+                    return;
+                }
+
+                if (channel) {
+                     await channel.send({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor('Orange')
+                                .setDescription(await t(channel, 'music.helpers.musicManager.manager.idleDisconnect', { seconds: IDLE_TIMEOUT_MS / 1000 }))
+                        ],
+                    });
+                }
+
                 player.destroy();
-            }
+            }, IDLE_TIMEOUT_MS);
         }
     });
 
@@ -862,35 +891,41 @@ async function initializeMusicManager(bot) {
         }
     });
 
+    const TICKER_INTERVAL = 5000;
+
+    async function globalMusicUITicker() {
+        const players = client.poru.players.values();
+
+        for (const player of players) {
+            try {
+                if (!player || player.destroyed || !player.nowPlayingMessage?.editable || !player.currentTrack) {
+                    continue;
+                }
+
+                const track = player.currentTrack;
+                if (track.info) {
+                    if (!track.info.isStream && track.info.length > 0) {
+                        if (player.position >= track.info.length - 5000) {
+                            continue;
+                        }
+                    }
+                }
+
+                await updateNowPlayingUI(player);
+            } catch (e) {
+                logger.warn(`[Ticker] Failed to update UI for player: ${player.guildId}`, e.message);
+            }
+        }
+
+        setTimeout(globalMusicUITicker, TICKER_INTERVAL);
+    }
+
     client.once('clientReady', () => {
         client.poru.init(client);
 
-        logger.info('🎵 Starting Global Music UI Ticker (every 3 seconds)');
-        setInterval(() => {
-            const players = client.poru.players.values();
+        logger.info(`🎵 Starting Global Music UI Ticker (every ${TICKER_INTERVAL / 1000} seconds)`);
 
-            for (const player of players) {
-                try {
-                    if (!player || player.destroyed || !player.nowPlayingMessage?.editable || !player.currentTrack) {
-                        continue;
-                    }
-
-                    const track = player.currentTrack;
-
-                    if (track.info) {
-                        if (!track.info.isStream && track.info.length > 0) {
-                            if (player.position >= track.info.length - 5000) {
-                                continue;
-                            }
-                        }
-                    }
-
-                    updateNowPlayingUI(player);
-                } catch (e) {
-                    logger.warn(`[Ticker] Gagal update UI buat player: ${player.guildId}`, e.message);
-                }
-            }
-        }, 3000);
+        globalMusicUITicker();
     });
 }
 

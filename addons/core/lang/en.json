@@ -2097,7 +2097,8 @@
                     "queue": "✅ **Added to queue:** [{title}]({url})",
                     "no": {
                         "listener": "❌ There is no one listening in the voice channel. exiting now..."
-                    }
+                    },
+                    "idleDisconnect": "❌ No activity in the voice channel for {seconds} seconds. Disconnecting..."
                 },
                 "music": {
                     "permission": {
