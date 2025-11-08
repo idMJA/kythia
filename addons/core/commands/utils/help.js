@@ -204,10 +204,10 @@ module.exports = {
                     command_count: currentState.totalCommands,
                 });
 
-                if (kythiaConfig && kythiaConfig.settings && kythiaConfig.settings.bannerImage) {
+                if (kythiaConfig && kythiaConfig.settings && kythiaConfig.settings.helpBannerImage) {
                     container
                         .addMediaGalleryComponents(
-                            new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.bannerImage)])
+                            new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.helpBannerImage)])
                         )
                         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
                 }

@@ -21,7 +21,7 @@ const {
 
 module.exports = {
     data: new SlashCommandBuilder().setName('about').setDescription(`😋 A brief introduction about kythia`),
-    aliases: ['abt','🌸'],
+    aliases: ['abt', '🌸'],
     async execute(interaction, container) {
         const { t, kythiaConfig, helpers } = container;
         const { convertColor } = helpers.color;
@@ -34,6 +34,10 @@ module.exports = {
                     new TextDisplayBuilder().setContent(
                         await t(interaction, 'core.utils.about.embed.title', { username: interaction.client.user.username })
                     )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addMediaGalleryComponents(
+                    new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.aboutBannerImage)])
                 )
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(
@@ -59,9 +63,6 @@ module.exports = {
                     )
                 )
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-                .addMediaGalleryComponents(
-                    new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.bannerImage)])
-                )
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'core.utils.about.embed.footer'))),
         ];
 
