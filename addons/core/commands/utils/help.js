@@ -55,8 +55,6 @@ module.exports = {
             return true;
         }
 
-        // Adapted to match the detail and structure of getCommandsData in file_context_0
-
         function countTotalCommands(commands) {
             let totalCount = 0;
             const processedCommands = new Set();
@@ -210,6 +208,15 @@ module.exports = {
                     category_count: currentState.allCategories.length,
                     command_count: currentState.totalCommands,
                 });
+
+                if (kythiaConfig && kythiaConfig.settings && kythiaConfig.settings.bannerImage) {
+                    container
+                        .addMediaGalleryComponents(
+                            new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.bannerImage)])
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+                }
+
                 container.addTextDisplayComponents(new TextDisplayBuilder().setContent(desc));
             } else {
                 const categoryData = currentState.allCategories.find((c) => c.value === selectedCategory);
@@ -241,7 +248,9 @@ module.exports = {
                 .setCustomId('help-select-category')
                 .setPlaceholder(
                     (
-                        await t(interaction, 'core.utils.help.select.menu.placeholder', { username: interaction.client.user.username })
+                        await t(interaction, 'core.utils.help.select.menu.placeholder', {
+                            username: interaction.client.user.username,
+                        })
                     ).replace(/^./, (c) => c.toUpperCase())
                 )
                 .addOptions(categoriesOnPage);
@@ -250,16 +259,17 @@ module.exports = {
             const rowButtons = new ActionRowBuilder();
             const totalCategoryPages = Math.ceil(currentState.allCategories.length / CATEGORIES_PER_PAGE);
 
-            const homeButtonLabel = (await t(interaction, 'core.utils.help.button.go.home')) || '🏠 Home';
-            rowButtons.addComponents(
-                new ButtonBuilder()
-                    .setCustomId('help-go-home')
-                    .setLabel(homeButtonLabel)
-                    .setStyle(ButtonStyle.Success)
-                    .setDisabled(!selectedCategory)
-            );
-
+            // Only add the home button if not on home. (selectedCategory != null)
             if (selectedCategory) {
+                const homeButtonLabel = (await t(interaction, 'core.utils.help.button.go.home')) || '🏠 Home';
+                rowButtons.addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('help-go-home')
+                        .setLabel(homeButtonLabel)
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(false)
+                );
+
                 const totalDocPages = currentState.pages[selectedCategory]?.length || 1;
                 rowButtons.addComponents(
                     new ButtonBuilder()
@@ -305,7 +315,9 @@ module.exports = {
             container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
+                    await t(interaction, 'common.container.footer', {
+                        username: interaction.client.user.username,
+                    })
                 )
             );
 
