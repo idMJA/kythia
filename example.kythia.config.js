@@ -14,6 +14,7 @@
  * 4. If you add new configuration keys, document them clearly and update `.env.example`.
  *
  * ===================================================================
+ * DM me if you need any help https://discord.com/users/1158654757183959091
  */
 
 function loadKythiaConfig() {
@@ -231,7 +232,7 @@ function loadKythiaConfig() {
                 active: false,
             },
             /** -------------------------------------------------------------------
-             * MUSIC ADDON (Lavalink & Spotify)
+             * MUSIC ADDON (Using Lavalink)
              * ------------------------------------------------------------------- */
             music: {
                 active: true,
@@ -247,13 +248,17 @@ function loadKythiaConfig() {
                 suggestionLimit: 7,
                 /**
                  * use Spotify for music feature
-                 * required lavalink client, you can get it at: https://github.com/freyacodes/Lavalink
+                 * required lavalink client, you can get it at: https://github.com/lavalink-devs/Lavalink
                  * use lavalink version 4.1.1
                  * with plugin:
                  * - lavasrc-plugin-4.8.1
                  * - youtube-plugin-1.16.0 (with yt-cipher)
                  * - lavasearch-plugin-1.0.0
                  * - sponsorblock-plugin-3.0.1
+                 * 
+                 * OR you can just join kythia's server, there's many updates and free lavalink too
+                 * https://discord.com/invite/RK6WYM2GAq
+                 * https://discord.com/users/1158654757183959091
                  */
                 lavalink: {
                     // Comma-separated list of Lavalink hosts (example: localhost,localhost:2333,localhost:2334)
@@ -351,7 +356,9 @@ function loadKythiaConfig() {
             // Banner image URL for embeds or dashboard
             // you can host it on your own server
             // or you can use a CDN like Cloudflare Images/ imagekit/ etc
-            bannerImage: 'https://kythia.png',
+            bannerImage: 'https://....png',
+            voteBannerImage: 'https://....png',
+            gcBannerImage: 'https://....png',
             // link to error status page
             statusPage: 'https://status.kythia.my.id',
             // webhook notification when error on or off

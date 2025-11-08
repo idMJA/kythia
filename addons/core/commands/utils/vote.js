@@ -27,38 +27,50 @@ module.exports = {
         const { convertColor } = helpers.color;
 
         const components = [
-            new ContainerBuilder()
-                .setAccentColor(convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' }))
-                .addMediaGalleryComponents(
-                    new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.bannerImage)])
-                )
-                .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(
-                        await t(interaction, 'core.utils.vote.container.title', { username: interaction.client.user.username })
-                    )
-                )
-                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-                .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(
-                        await t(interaction, 'core.utils.vote.container.desc', { username: interaction.client.user.username })
-                    )
-                )
-                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-                .addActionRowComponents(
-                    new ActionRowBuilder().addComponents(
-                        new ButtonBuilder()
-                            .setStyle(ButtonStyle.Link)
-                            .setLabel(await t(interaction, 'core.utils.vote.button.topgg', { username: interaction.client.user.username }))
-                            .setURL(`https://top.gg/bot/${kythiaConfig.bot.clientId}/vote`)
-                    )
-                )
-                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            (async () => {
+                const container = new ContainerBuilder().setAccentColor(
+                    convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' })
+                );
 
-                .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(
-                        await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
+                // Attach a banner if it's defined
+                if (kythiaConfig.settings?.voteBannerImage) {
+                    container.addMediaGalleryComponents(
+                        new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.voteBannerImage)])
+                    );
+                }
+
+                container
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            await t(interaction, 'core.utils.vote.container.title', { username: interaction.client.user.username })
+                        )
                     )
-                ),
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            await t(interaction, 'core.utils.vote.container.desc', { username: interaction.client.user.username })
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addActionRowComponents(
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setStyle(ButtonStyle.Link)
+                                .setLabel(
+                                    await t(interaction, 'core.utils.vote.button.topgg', { username: interaction.client.user.username })
+                                )
+                                .setURL(`https://top.gg/bot/${kythiaConfig.bot.clientId}/vote`)
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
+                        )
+                    );
+
+                return container;
+            })(),
         ];
 
         await interaction.reply({

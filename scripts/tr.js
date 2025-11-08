@@ -4,9 +4,9 @@ const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 
 const API_KEYS = (process.env.GEMINI_API_KEYS || '').split(',').filter(Boolean);
-const TARGET_LANGUAGE = 'English';
-const INPUT_FILE = path.join(__dirname, '..', 'addons', 'core', 'lang', 'id.json');
-const OUTPUT_FILE = path.join(__dirname, '..', 'addons', 'core', 'lang', 'en.generated.json');
+const TARGET_LANGUAGE = 'Japan (ja)';
+const INPUT_FILE = path.join(__dirname, '..', 'addons', 'core', 'lang', 'en.json');
+const OUTPUT_FILE = path.join(__dirname, '..', 'addons', 'core', 'lang', 'ja.json');
 const BATCH_SIZE = 80;
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -76,8 +76,8 @@ async function translateBatch(batch) {
     });
 
     const prompt = `
-You are a professional localization expert. Translate the JSON values from Indonesian to ${TARGET_LANGUAGE}.
-- **Target Locale:** en or en-US (choose naturally)
+You are a professional localization expert. Translate the JSON values from english to ${TARGET_LANGUAGE}.
+- **Target Locale:** ja (choose naturally)
 - **DO NOT** translate the JSON keys.
 - **DO NOT** translate any placeholder tokens that look like \`__P_N__\`. Keep them exactly as they are.
 - **KEEP** all original markdown (\`##\`, \`*\`, \`\\\`\`, \`\n\`).

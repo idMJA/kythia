@@ -227,8 +227,12 @@ module.exports = async (bot, message) => {
 
                     if (message.channel && message.channel.type !== ChannelType.DM) {
                         const reply = await message.reply({ embeds: [embed] }).catch(() => null);
+                        if (reply) setTimeout(() => reply.delete().catch(() => {}), 5000);
                     } else {
-                        await message.author.send({ embeds: [embed] }).catch(() => {});
+                        const dm = await message.author.send({ embeds: [embed] }).catch(() => null);
+                        if (dm) setTimeout(() => {
+                            dm.delete && dm.delete().catch(() => {});
+                        }, 5000);
                     }
                     await afkData.destroy({ individualHooks: true });
                 }

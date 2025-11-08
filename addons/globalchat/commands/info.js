@@ -6,7 +6,7 @@
  * @version 0.9.11-beta
  */
 
-const { MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
+const { MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MediaGalleryBuilder, MediaGalleryItemBuilder } = require('discord.js');
 const fetch = require('node-fetch');
 
 module.exports = {
@@ -50,14 +50,17 @@ module.exports = {
         const components = [
             new ContainerBuilder()
                 .setAccentColor(convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' }))
+                .addMediaGalleryComponents(
+                    new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythiaConfig.settings.gcBannerImage)])
+                )
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## 🌏 **Kythia Global Chat Information**`))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
                         `Connect and chat with users from different servers in real time! Kythia's Global Chat lets your community interact beyond your own server walls, making Discord even more lively and social.
-                        ・ Chat with users worldwide
-                        ・ Safe & moderated environment
-                        ・ Made possible by Tronix Development`
+・ Chat with users worldwide
+・ Safe & moderated environment
+・ Made possible by Tronix Development`
                     )
                 )
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
@@ -75,7 +78,7 @@ module.exports = {
                     )
                 )
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-                .addTextDisplayComponents(new TextDisplayBuilder().setContent(`Kythia by kenndeclouv • Global Chat powered by Tronix Dev`)),
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# Kythia by kenndeclouv • Global Chat powered by Tronix Dev`)),
         ];
 
         return interaction.editReply({
