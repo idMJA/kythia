@@ -4675,5 +4675,202 @@
                 "has_record": "You have **{count}** DNS records on this subdomain.\nUse `/pro dns delete id:<id>` to delete."
             }
         }
+    },
+    "tempvoice": {
+        "common": {
+            "no_channel_id": "Error: Channel ID not found in interaction.",
+            "not_owner": "❌ You are not the owner of this channel!",
+            "channel_not_found": "❌ Channel not found! (It might be deleted or a cache error)",
+            "fail": "❌ An error occurred! (Please check bot permissions)",
+            "no_active_channel": "You do not have an active tempvoice channel!"
+        },
+        "setup": {
+            "auto_category_name": "Kythia TempVoice",
+            "auto_trigger_name": "🎧┃Join to Create",
+            "auto_control_name": "🌸┃interface",
+            "auto_reason": "Automatically created by /tempvoice setup",
+            "panel_send_fail": "❌ Failed to send panel message. Setup cancelled.",
+            "success_content": "## ✅ **TempVoice System successfully set up!**\n\n• **Trigger Channel:** <#{triggerChannel}>\n• **Category:** `{categoryName}`\n• **Control Panel:** <#{controlPanel}>"
+        },
+        "unset": {
+            "not_setup": "ℹ️ TempVoice system has not been set up yet.",
+            "delete_reason": "TempVoice system disabled (unset).",
+            "delete_reason_panel": "TempVoice control panel deleted (unset).",
+            "delete_reason_trigger": "TempVoice trigger channel deleted (unset).",
+            "delete_reason_category": "TempVoice category deleted (unset).",
+            "success_content": "🗑️ **TempVoice successfully disabled.**\n\nAll temp channels, control panel, and category (if auto-created) have been deleted."
+        },
+        "tv_delete": {
+            "no_active": "You do not have any active TempVoice channel!",
+            "not_found": "Your channel could not be found!",
+            "confirm": "⚠️ **Delete Confirmation**\nAre you sure you want to delete your TempVoice channel?",
+            "delete_btn": "DELETE",
+            "cancel_btn": "CANCEL",
+            "deleted": "✅ Your TempVoice channel has been deleted.",
+            "deleted_reason": "Deleted by owner via interface.",
+            "cancelled": "❎ Channel deletion cancelled.",
+            "expired": "⏱️ Deletion confirmation expired. No action was taken."
+        },
+        "limit": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "modal_title": "Set Channel User Limit",
+            "label": "User limit (0 = unlimited)",
+            "placeholder": "Example: 5",
+            "modal": {
+                "invalid_input": "Invalid input. Please enter a number between 0 and 99.",
+                "channel_id_not_found": "Error: Channel ID not found.",
+                "not_owner": "You are not the owner of this channel!",
+                "channel_not_found": "Channel not found! (Maybe the cache is invalid)",
+                "success": "Channel user limit successfully set to {limit}.",
+                "unlimited": "unlimited"
+            }
+        },
+        "privacy": {
+            "no_active_channel": "❌ You do not have an active temp voice channel!",
+            "channel_not_found": "❌ Your channel was not found! (Possibly due to a cache error)",
+            "menu": {
+                "placeholder": "Choose your voice channel privacy...",
+                "lock": {
+                    "label": "Lock",
+                    "desc": "Only trusted users will be able to join your voice channel"
+                },
+                "unlock": {
+                    "label": "Unlock",
+                    "desc": "Everyone will be able to join your voice channel"
+                },
+                "invisible": {
+                    "label": "Invisible",
+                    "desc": "Only trusted users will be able to view your voice channel"
+                },
+                "visible": {
+                    "label": "Visible",
+                    "desc": "Everyone will be able to view your voice channel"
+                },
+                "content": "## 🔏 Channel Privacy Settings\n\nChoose how others can join or view your TempVoice channel:\n- **Lock 🔒**: Only trusted users can join.\n- **Unlock 🔓**: Everyone can join.\n- **Invisible ❌**: Only trusted users can view.\n- **Visible 👁️**: Everyone can view.",
+                "no_channel_id": "Error: Channel ID not found in interaction.",
+                "not_owner": "❌ You are not the owner of this channel!",
+                "channel_not_found": "❌ Channel not found! (It might be deleted or a cache error)",
+                "fail": "❌ Failed to change channel privacy! (Please check bot permissions)",
+                "lock_success": "Channel is now **Locked** 🔒. (Connect: Disallowed)",
+                "unlock_success": "Channel is now **Unlocked** 🔓. (Connect: Allowed)",
+                "invisible_success": "Channel is now **Invisible** ❌. (View: Disallowed, Connect: Disallowed)",
+                "visible_success": "Channel is now **Visible** 👁️. (View: Allowed, Connect: Allowed)"
+            }
+        },
+        "rename": {
+            "no_active_channel": "You do not have any active tempvoice channel!",
+            "modal_title": "Rename Channel",
+            "input_label": "New channel name",
+            "input_placeholder": "Example: Chill Room",
+            "modal": {
+                "error": {
+                    "no_id": "❌ Error: Channel ID not found.",
+                    "not_owner": "❌ You are not the owner of this channel!",
+                    "not_found": "❌ Channel not found! (Maybe the cache is out of sync)"
+                },
+                "success": "✅ Channel name has been changed to: **{newName}**"
+            }
+        },
+        "interface": {
+            "header": "## 🎧 Kythia TempVoice",
+            "ctrlInfo": "**Channel Controls:**\nUse the buttons below to manage your channel. Only the channel owner can fully manage. If you are not the owner, some buttons will be disabled.",
+            "buttons": {
+                "rename": "NAME",
+                "limit": "LIMIT",
+                "privacy": "PRIVACY",
+                "waiting": "WAITING R.",
+                "chat": "CHAT",
+                "trust": "TRUST",
+                "untrust": "UNTRUST",
+                "invite": "INVITE",
+                "kick": "KICK",
+                "region": "REGION",
+                "block": "BLOCK",
+                "unblock": "UNBLOCK",
+                "claim": "CLAIM",
+                "transfer": "TRANSFER",
+                "delete": "DELETE"
+            }
+        },
+        "trust": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select user(s) to trust...",
+                "content": "Please select the user(s) you want to trust in your channel:"
+            },
+            "success": "✅ Successfully trusted **{users}**. They can now see and join your locked/invisible channel."
+        },
+        "untrust": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select user(s) to untrust...",
+                "content": "Please select the user(s) you want to untrust in your channel:"
+            },
+            "success": "✅ Successfully untrusted **{users}**. They can no longer access your locked/invisible channel."
+        },
+        "claim": {
+            "not_in_channel": "❌ You must be in a temp voice channel to claim it.",
+            "not_temp_channel": "❌ This is not a temp voice channel.",
+            "already_owner": "ℹ️ You are already the owner of this channel.",
+            "owner_exists": "❌ Failed to claim! The original owner (**{user}**) is still in this server.",
+            "success": "👑 You have successfully claimed this channel!"
+        },
+        "kick": {
+            "no_active_channel": "❌ You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select a user to kick...",
+                "content": "Please select the user you want to kick from your channel:",
+                "user_not_found": "❌ That user was not found in this server.",
+                "not_in_channel": "❌ **{user}** is not in your voice channel.",
+                "kick_reason": "Kicked by channel owner.",
+                "success": "✅ **{user}** has been kicked from the channel."
+            }
+        },
+        "transfer": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select a new owner...",
+                "content": "Please select the user you want to transfer ownership to:"
+            },
+            "transfer_to_self": "ℹ️ You are already the owner.",
+            "user_not_found": "❌ That user was not found in this server.",
+            "success": "👑 Successfully transferred ownership to **{user}**!"
+        },
+        "region": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select a voice region...",
+                "content": "Please select a new voice region for your channel:"
+            },
+            "success": "✅ Channel region successfully set to **{region}**."
+        },
+        "block": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select user(s) to block...",
+                "content": "Please select the user(s) you want to block from your channel:"
+            },
+            "success": "🚫 Successfully blocked **{users}**. They will not be able to see or join."
+        },
+        "unblock": {
+            "no_active_channel": "You do not have an active tempvoice channel!",
+            "menu": {
+                "placeholder": "Select user(s) to unblock...",
+                "content": "Please select the user(s) you want to unblock:"
+            },
+            "success": "🟢 Successfully unblocked **{users}**."
+        },
+        "invite": {
+            "no_active_channel": "❌ You do not have an active tempvoice channel!",
+            "invite_reason": "Invite created by TempVoice channel owner",
+            "fail": "❌ Failed to create an invite. (Does the bot have 'Create Invite' permission?)",
+            "dm_message": "## 📞 You've been invited!\n\n**{user}** invited you to join their temporary voice channel **{channel}** in the server **{guild}**.\n\n{inviteUrl}\n\n_(This invite is temporary and will expire.)_",
+            "success_dm": "✅ Successfully sent invites to: **{users}**.",
+            "fail_dm": "⚠️ Could not send DMs (DMs might be closed or bot blocked) to: **{users}**.",
+            "menu": {
+                "placeholder": "Select user(s) to invite...",
+                "content": "Please select the user(s) you want to DM an invite to:"
+            }
+        }
     }
 }

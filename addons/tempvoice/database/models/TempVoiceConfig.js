@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/TempVoiceConfig/database/models/TempVoiceConfig.js
+ * @namespace: addons/tempvoice/database/models/TempVoiceConfig.js
  * @type: Database Model
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
@@ -14,26 +14,11 @@ class TempVoiceConfig extends KythiaModel {
     static init(sequelize) {
         super.init(
             {
-                guildId: {
-                    type: DataTypes.STRING,
-                    primaryKey: true,
-                    allowNull: false,
-                },
-                triggerChannelId: {
-                    // Channel "Join to Create"
-                    type: DataTypes.STRING,
-                    allowNull: false,
-                },
-                controlPanelChannelId: {
-                    // Channel teks buat ngirim interface
-                    type: DataTypes.STRING,
-                    allowNull: true,
-                },
-                categoryId: {
-                    // Kategori tempat bikin channel baru
-                    type: DataTypes.STRING,
-                    allowNull: false,
-                },
+                guildId: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
+                triggerChannelId: { type: DataTypes.STRING, allowNull: false },
+                controlPanelChannelId: { type: DataTypes.STRING, allowNull: true },
+                interfaceMessageId: { type: DataTypes.STRING, allowNull: true },
+                categoryId: { type: DataTypes.STRING, allowNull: false },
             },
             {
                 sequelize,

@@ -65,7 +65,7 @@ const { Kythia, KythiaModel, createSequelizeInstance } = require('kythia-core');
 // ===== 2. Load Core Helpers & Utilities with Meaningful Descriptions =====
 const logger = require('@coreHelpers/logger'); // Logging system (console and ext. sinks)
 const translator = require('@coreHelpers/translator'); // I18n (Internationalization) manager
-const { isTeam, isOwner, embedFooter, isPremium, isVoterActive } = require('@coreHelpers/discord'); // Discord helper funcs for permissions/identity
+const { isTeam, isOwner, embedFooter, isPremium, isVoterActive, simpleContainer } = require('@coreHelpers/discord'); // Discord helper funcs for permissions/identity
 const { checkCooldown, formatDuration } = require('@coreHelpers/time');
 
 // ===== 3. Load Database Models: Sequelize Models =====
@@ -103,7 +103,7 @@ const dependencies = {
     sequelize: sequelize,
     models: {},
     helpers: {
-        discord: { isTeam, isOwner, embedFooter, isPremium, isVoterActive },
+        discord: { isTeam, isOwner, embedFooter, isPremium, isVoterActive, simpleContainer },
         color: { convertColor },
         time: { checkCooldown, formatDuration },
     },

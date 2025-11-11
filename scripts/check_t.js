@@ -20,7 +20,7 @@ const glob = require('glob');
 // --- CONFIGURATION ---
 const PROJECT_ROOT = path.join(__dirname, '..'); // Asumsi skrip ada di root project
 const SCAN_DIRECTORIES = ['addons', 'src'];
-const LANG_DIR = path.join(PROJECT_ROOT, 'src', 'lang');
+const LANG_DIR = path.join(PROJECT_ROOT, 'addons', 'core', 'lang');
 const IGNORE_PATTERNS = [
     '**/node_modules/**',
     '**/dist/**',
@@ -47,7 +47,9 @@ const translationKeyRegex = /t\s*\([^,]+?,\s*['"`]([a-zA-Z0-9_.-]+)['"`]/g;
 function loadLocales() {
     console.log(`\n🔍 Reading language files from: ${LANG_DIR}`);
     try {
-        const langFiles = fs.readdirSync(LANG_DIR).filter((file) => file.endsWith('.json') && !file.includes('_flat') && !file.includes('_FLAT')); // Abaikan backup flat
+        const langFiles = fs
+            .readdirSync(LANG_DIR)
+            .filter((file) => file.endsWith('.json') && !file.includes('_flat') && !file.includes('_FLAT')); // Abaikan backup flat
         if (langFiles.length === 0) {
             console.error('\x1b[31m%s\x1b[0m', '❌ No .json language files found in the language folder.');
             return false;
@@ -86,7 +88,7 @@ function findUsedKeys() {
                     }
                 }
             } catch (readError) {
-                 console.warn(`\x1b[33m[WARN] Skipping file due to read error: ${file} - ${readError.message}\x1b[0m`);
+                console.warn(`\x1b[33m[WARN] Skipping file due to read error: ${file} - ${readError.message}\x1b[0m`);
             }
         }
     }
@@ -116,7 +118,6 @@ function hasNestedKey(obj, pathExpr) {
     return true; // Key path exists
 }
 
-
 /**
  * Compares the used keys with those present in the language files.
  * @returns {number} The total number of missing keys found.
@@ -128,16 +129,16 @@ function verifyKeys() {
     // Ambil list semua keys dari bahasa default (misal 'en') untuk cek key berlebih
     const defaultLang = Object.keys(locales)[0] || 'en'; // Asumsi bahasa pertama adalah default
     const allDefinedKeys = new Set();
-    if(locales[defaultLang]) {
+    if (locales[defaultLang]) {
         function getAllKeys(obj, prefix = '') {
-            Object.keys(obj).forEach(key => {
+            Object.keys(obj).forEach((key) => {
                 const fullKey = prefix ? `${prefix}.${key}` : key;
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
                     // Jangan masuk ke jobs atau shop karena itu data, bukan teks
-                    if(key !== 'jobs' && key !== 'shop') {
+                    if (key !== 'jobs' && key !== 'shop') {
                         getAllKeys(obj[key], fullKey);
                     } else {
-                         allDefinedKeys.add(fullKey); // Anggap 'jobs' itu sendiri sbg key
+                        allDefinedKeys.add(fullKey); // Anggap 'jobs' itu sendiri sbg key
                     }
                 } else {
                     allDefinedKeys.add(fullKey);
@@ -147,7 +148,6 @@ function verifyKeys() {
         getAllKeys(locales[defaultLang]);
         console.log(`  > Found ${allDefinedKeys.size} defined keys in ${defaultLang}.json for reference.`);
     }
-
 
     for (const lang in locales) {
         let missingKeys = [];
@@ -165,17 +165,19 @@ function verifyKeys() {
         if (missingKeys.length > 0) {
             // Pindahkan kursor ke baris baru setelah progress
             process.stdout.write('\n');
-            console.log(`❌ \x1b[31m[${lang.toUpperCase()}] Found ${missingKeys.length} MISSING keys (used in code, but not in ${lang}.json):\x1b[0m`);
+            console.log(
+                `❌ \x1b[31m[${lang.toUpperCase()}] Found ${missingKeys.length} MISSING keys (used in code, but not in ${lang}.json):\x1b[0m`
+            );
             missingKeys.sort().forEach((key) => console.log(`  - ${key}`));
         } else {
-             // Pindahkan kursor ke baris baru setelah progress
+            // Pindahkan kursor ke baris baru setelah progress
             process.stdout.write(`\x1b[32m ✓ OK (All used keys found)\x1b[0m\n`);
         }
         totalErrors += langErrors;
     }
 
     // --- Cek UNUSED Keys (ada di en.json tapi ga dipake di kode) ---
-     if (allDefinedKeys.size > 0) {
+    if (allDefinedKeys.size > 0) {
         let unusedKeys = [];
         for (const definedKey of allDefinedKeys) {
             if (!usedKeys.has(definedKey)) {
@@ -183,14 +185,15 @@ function verifyKeys() {
             }
         }
         if (unusedKeys.length > 0) {
-            console.log(`\n\n⚠️ \x1b[33mFound ${unusedKeys.length} UNUSED keys (defined in ${defaultLang}.json, but not found in code):\x1b[0m`);
-            unusedKeys.sort().forEach(key => console.log(`  - ${key}`));
+            console.log(
+                `\n\n⚠️ \x1b[33mFound ${unusedKeys.length} UNUSED keys (defined in ${defaultLang}.json, but not found in code):\x1b[0m`
+            );
+            unusedKeys.sort().forEach((key) => console.log(`  - ${key}`));
             // Jangan hitung ini sebagai error, cuma warning
         } else {
-             console.log(`\n\n✅ \x1b[32m[${defaultLang.toUpperCase()}] No unused keys found.\x1b[0m`);
+            console.log(`\n\n✅ \x1b[32m[${defaultLang.toUpperCase()}] No unused keys found.\x1b[0m`);
         }
     }
-
 
     return totalErrors;
 }

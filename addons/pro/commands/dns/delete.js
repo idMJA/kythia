@@ -9,7 +9,7 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
     subcommand: true,
-    data: (subcommand, t) =>
+    data: (subcommand) =>
         subcommand
             .setName('delete')
             .setDescription('🌐 Delete a DNS record from your subdomain.')

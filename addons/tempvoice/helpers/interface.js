@@ -1,8 +1,9 @@
 /**
  * @namespace: addons/tempvoice/helpers/interface.js
- * @type: Helper
- *
- * Creates a TempVoice control panel modeled after the full button layout shown in the image (4x4 grid), suited for component v2 Discord UI.
+ * @type: Helper Script
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.11-beta
  */
 const {
     ContainerBuilder,
@@ -19,70 +20,126 @@ const {
 
 /**
  * Generate TempVoice control interface components (component v2).
- * @param {string} channelId
+ * @param {object} container - Container dependensi (dari container.client)
  * @returns {{ components: any[] }}
  */
-const buildInterface = (channelId) => {
-    // Dynamic customIds (channel aware but privacy safe)
-    const customId = (act) => `tv_${act}:${channelId}`;
+async function buildInterface(interaction) {
+    const container = interaction.client.container;
+    const { kythiaConfig, helpers, t } = container;
+    const { convertColor } = helpers.color;
 
-    // Header
-    const header = new TextDisplayBuilder().setContent('🎧 **TempVoice Control Panel**');
-    const banner = new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(kythia.settings.bannerImage)]);
-    const ctrlInfo = new TextDisplayBuilder().setContent('**Kontrol Channel:**\nGunakan tombol berikut untuk mengelola channel-mu.');
+    const bannerUrl = kythiaConfig?.settings?.bannerImage;
 
+    const header = new TextDisplayBuilder().setContent(`${await t(interaction, 'tempvoice.interface.header')}`);
+    const banner = new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(bannerUrl)]);
+    const ctrlInfo = new TextDisplayBuilder().setContent(await t(interaction, 'tempvoice.interface.ctrlInfo'));
     const divider = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true);
 
-    // ---- BUTTONS ----
-    // Row 1
-    const row1 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(customId('rename')).setLabel('NAME').setStyle(ButtonStyle.Secondary).setEmoji('⌨️'),
-        new ButtonBuilder().setCustomId(customId('limit')).setLabel('LIMIT').setStyle(ButtonStyle.Secondary).setEmoji('👥'),
-        new ButtonBuilder().setCustomId(customId('privacy')).setLabel('PRIVACY').setStyle(ButtonStyle.Secondary).setEmoji('🛡️'),
-        new ButtonBuilder().setCustomId(customId('waiting')).setLabel('WAITING R.').setStyle(ButtonStyle.Secondary).setEmoji('⏲️'),
-        new ButtonBuilder().setCustomId(customId('chat')).setLabel('CHAT').setStyle(ButtonStyle.Secondary).setEmoji('💬')
-    );
-    // Row 2
-    const row2 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(customId('trust')).setLabel('TRUST').setStyle(ButtonStyle.Success).setEmoji('🤝'),
-        new ButtonBuilder().setCustomId(customId('untrust')).setLabel('UNTRUST').setStyle(ButtonStyle.Secondary).setEmoji('✂️'),
-        new ButtonBuilder().setCustomId(customId('invite')).setLabel('INVITE').setStyle(ButtonStyle.Success).setEmoji('📞'),
-        new ButtonBuilder().setCustomId(customId('kick')).setLabel('KICK').setStyle(ButtonStyle.Danger).setEmoji('📞'),
-        new ButtonBuilder().setCustomId(customId('region')).setLabel('REGION').setStyle(ButtonStyle.Secondary).setEmoji('🌐')
-    );
-    // Row 3
-    const row3 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(customId('block')).setLabel('BLOCK').setStyle(ButtonStyle.Secondary).setEmoji('🚫'),
-        new ButtonBuilder().setCustomId(customId('unblock')).setLabel('UNBLOCK').setStyle(ButtonStyle.Secondary).setEmoji('🟢'),
-        new ButtonBuilder().setCustomId(customId('claim')).setLabel('CLAIM').setStyle(ButtonStyle.Primary).setEmoji('👑'),
-        new ButtonBuilder().setCustomId(customId('transfer')).setLabel('TRANSFER').setStyle(ButtonStyle.Primary).setEmoji('🔁'),
-        new ButtonBuilder().setCustomId(customId('delete')).setLabel('DELETE').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+    const row1_static = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('tv_rename')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.rename'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('⌨️'),
+        new ButtonBuilder()
+            .setCustomId('tv_limit')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.limit'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('👥'),
+        new ButtonBuilder()
+            .setCustomId('tv_privacy')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.privacy'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🛡️'),
+        new ButtonBuilder()
+            .setCustomId('tv_waiting')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.waiting'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('⏲️'),
+        new ButtonBuilder()
+            .setCustomId('tv_chat')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.chat'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('💬')
     );
 
-    // Optionally: pad each row to max 5 buttons (Discord limitation per row)
-    // In the image "WAITING R." and "CHAT" are in row 1 as 4th/5th element, region at the end of row 2, delete at the end of row 3.
-    // So, we respect the order and put all 13 buttons into 3 rows.
+    const row2_static = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('tv_trust')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.trust'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🤝'),
+        new ButtonBuilder()
+            .setCustomId('tv_untrust')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.untrust'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('✂️'),
+        new ButtonBuilder()
+            .setCustomId('tv_invite')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.invite'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('📞'),
+        new ButtonBuilder()
+            .setCustomId('tv_kick')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.kick'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('👢'),
+        new ButtonBuilder()
+            .setCustomId('tv_region')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.region'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🌐')
+    );
+
+    const row3_static = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('tv_block')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.block'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🚫'),
+        new ButtonBuilder()
+            .setCustomId('tv_unblock')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.unblock'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🟢'),
+        new ButtonBuilder()
+            .setCustomId('tv_claim')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.claim'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('👑'),
+        new ButtonBuilder()
+            .setCustomId('tv_transfer')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.transfer'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔁'),
+        new ButtonBuilder()
+            .setCustomId('tv_delete')
+            .setLabel(await t(interaction, 'tempvoice.interface.buttons.delete'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🗑️')
+    );
 
     const footer = new TextDisplayBuilder().setContent(
-        '_Hanya owner channel yang dapat mengelola penuh. Jika kamu bukan owner, beberapa tombol akan dinonaktifkan._'
+        await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
     );
 
-    const container = new ContainerBuilder()
-        .setAccentColor(0x5865f2)
+    const containerComponent = new ContainerBuilder()
+        .setAccentColor(convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' }))
         .addTextDisplayComponents(header)
+        .addSeparatorComponents(divider)
         .addMediaGalleryComponents(banner)
         .addSeparatorComponents(divider)
         .addTextDisplayComponents(ctrlInfo)
         .addSeparatorComponents(divider)
-        .addActionRowComponents(row1, row2, row3)
+        .addActionRowComponents(row1_static, row2_static, row3_static)
         .addSeparatorComponents(divider)
         .addTextDisplayComponents(footer);
 
     return {
-        components: [container],
+        components: [containerComponent],
         flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2,
     };
-};
+}
 
 module.exports = {
     buildInterface,

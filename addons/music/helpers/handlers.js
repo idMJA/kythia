@@ -2156,10 +2156,6 @@ async function handle247(interaction, player) {
 
     let playerInstance = player;
     if (!playerInstance) {
-        if (!member.voice.channel) {
-            const embed = new EmbedBuilder().setColor('Red').setDescription(await t(interaction, 'music.errors.no_voice_channel'));
-            return interaction.editReply({ embeds: [embed] });
-        }
         playerInstance = client.poru.createConnection({
             guildId: guild.id,
             voiceChannel: member.voice.channel.id,

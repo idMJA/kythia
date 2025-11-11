@@ -1,54 +1,48 @@
 /**
  * @namespace: addons/tempvoice/modals/tv_rename_modal.js
- * @type: Modal Handler
- *
- * Handler ini dipanggil begitu user submit "Rename TempVoice Channel" modal.
- * Triggered by @tv_rename.js (button) dan id modal 'tv_rename_modal' sesuai @interface.js.
+ * @type: Module
+ * @copyright © 2025 kenndeclouv
+ * @assistant chaa & graa
+ * @version 0.9.11-beta
  */
-
 module.exports = {
     execute: async (interaction, container) => {
-        const { models } = container;
+        const { models, t, client } = container;
 
-        // Ambil value input teks
-        const newName = interaction.fields.getTextInputValue('new_channel_name')?.trim();
-        if (!newName || newName.length < 1 || newName.length > 100) {
-            return interaction.reply({
-                content: 'Nama channel harus 1-100 karakter.',
-                ephemeral: true,
+        const newName = interaction.fields.getTextInputValue('channel_name');
+
+        const channelId = interaction.customId.split(':')[1];
+        if (!channelId) {
+            return interaction.reply({ 
+                content: await t(interaction, 'tempvoice.rename.modal.error.no_id'), 
+                ephemeral: true 
             });
         }
 
-        // Cari channel user (pastikan user memang punya tempvoice)
         const activeChannel = await models.TempVoiceChannel.findOne({
-            where: { ownerId: interaction.user.id, guildId: interaction.guild.id },
+            where: { channelId: channelId, ownerId: interaction.user.id },
         });
-
         if (!activeChannel) {
             return interaction.reply({
-                content: 'Kamu tidak punya channel TempVoice yang aktif!',
-                ephemeral: true,
+                content: await t(interaction, 'tempvoice.rename.modal.error.not_owner'), 
+                ephemeral: true
             });
         }
 
-        // Fetch channel (may have been deleted)
-        const channel = await interaction.guild.channels.fetch(activeChannel.channelId).catch(() => null);
+        const channel = await client.channels.fetch(channelId, { force: true }).catch(() => null);
+
         if (!channel) {
             return interaction.reply({
-                content: 'Channel-mu tidak ditemukan! (Mungkin sudah dihapus)',
-                ephemeral: true,
+                content: await t(interaction, 'tempvoice.rename.modal.error.not_found'),
+                ephemeral: true
             });
         }
 
-        // Action: Rename channel
-        await channel.setName(newName).catch(() => null);
+        await channel.setName(newName);
 
-        // Optional: update name in DB if model stores it (skip if not needed)
-        // await activeChannel.update({ name: newName });
-
-        return interaction.reply({
-            content: `Nama channel berhasil diubah menjadi: **${newName}**`,
-            ephemeral: true,
+        await interaction.reply({
+            content: await t(interaction, 'tempvoice.rename.modal.success', { newName }),
+            ephemeral: true
         });
     },
 };

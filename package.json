@@ -38,7 +38,7 @@
         "ioredis": "^5.7.0",
         "javascript-obfuscator": "^4.1.1",
         "json-stable-stringify": "^1.3.0",
-        "kythia-core": "^0.9.4-beta.2",
+        "kythia-core": "file:.yalc/kythia-core",
         "luxon": "^3.7.2",
         "lyrics-finder": "^21.7.0",
         "mariadb": "^3.4.5",

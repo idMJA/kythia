@@ -138,3 +138,4 @@ temp/
 storage/
 .yalc/
 yalc.lock
+*.sqlite

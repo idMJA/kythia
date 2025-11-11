@@ -5,18 +5,7 @@
  * @assistant chaa & graa
  * @version 0.9.11-beta
  */
-
-/**
- * @file src/utils/discord.js
- * @description Discord-related helpers for permissions, embeds, and premium checks.
- * Provides utilities to check team membership/premium, build consistent embed footers,
- * and update voice channel status via the HTTP API.
- *
- * Note: relies on global `kythia` for owner and token references.
- *
- * @copyright © 2025 kenndeclouv
- * @version 0.9.11-beta
- */
+const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags } = require('discord.js');
 
 const KythiaUser = require('@coreModels/KythiaUser');
 const KythiaTeam = require('@coreModels/KythiaTeam');
@@ -124,5 +113,37 @@ async function isVoterActive(userId) {
     return true;
 }
 
+/**
+ * Create a simple Discord container reply with optional color & auto-footer.
+ * @param {object} interaction - Discord interaction (for t)
+ * @param {object} container - Dependency injection
+ * @param {string} content - Main response text
+ * @param {object} [options={}] - Extra options
+ * @param {string} [options.color] - Accent color (hex/discord)
+ * @returns {Promise<object>} - Discord reply obj ({ components, flags })
+ */
+async function simpleContainer(interaction, content, options = {}) {
+    const { kythiaConfig, helpers, t } = interaction.client.container;
+    const { convertColor } = helpers.color;
+    const { color } = options;
 
-module.exports = { isOwner, isTeam, embedFooter, isPremium, setVoiceChannelStatus, isVoterActive };
+    // Get accent color
+    let accentColor = color
+        ? convertColor(color, { from: 'discord', to: 'decimal' }) || convertColor(color, { from: 'hex', to: 'decimal' })
+        : convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' });
+
+    // Build container
+    const replyContainer = new ContainerBuilder()
+        .setAccentColor(accentColor)
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(content))
+        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+                await t(interaction, 'common.container.footer', { username: interaction.client.user.username })
+            )
+        );
+
+    return [replyContainer];
+}
+
+module.exports = { isOwner, isTeam, embedFooter, isPremium, setVoiceChannelStatus, isVoterActive, simpleContainer };

@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/TempVoiceChannel/database/models/TempVoiceChannel.js
+ * @namespace: addons/tempvoice/database/models/TempVoiceChannel.js
  * @type: Database Model
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
@@ -15,7 +15,6 @@ class TempVoiceChannel extends KythiaModel {
         super.init(
             {
                 channelId: {
-                    // ID channel voice yang dibuat
                     type: DataTypes.STRING,
                     primaryKey: true,
                     allowNull: false,
@@ -25,14 +24,8 @@ class TempVoiceChannel extends KythiaModel {
                     allowNull: false,
                 },
                 ownerId: {
-                    // ID user yang punya channel
                     type: DataTypes.STRING,
                     allowNull: false,
-                },
-                interfaceMessageId: {
-                    // ID message interface di channel control panel
-                    type: DataTypes.STRING,
-                    allowNull: true,
                 },
             },
             {
