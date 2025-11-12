@@ -177,3 +177,18 @@
 
 
 
+### 💾 `/tiktok`
+
+**Description:** 🎬 Get and play a TikTok video by link.
+
+### 💻 Usage
+
+`/tiktok <link>`
+
+### ⚙️ Options
+
+- **`link*`**
+  - **Description:** The TikTok video link
+  - **Type:** Text
+
+

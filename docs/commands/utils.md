@@ -2,7 +2,7 @@
 
 ### 💾 `/about`
 
-**Description:** 😋 A brief introduction about Kythia
+**Description:** 😋 A brief introduction about kythia
 
 ### 📋 Details
 
@@ -26,6 +26,16 @@
 - **`reason`**
   - **Description:** The reason for being AFK.
   - **Type:** Text
+
+
+### 💾 `/cache`
+
+**Description:** Shows cache statistics.
+
+### 💻 Usage
+
+`/cache`
+
 
 
 ### 💾 `/convert`
@@ -167,6 +177,33 @@
   - **Type:** Number
 
 
+### 💾 `/grab`
+
+**Description:** 🛍️ grab stickers or emojis from messages.
+
+### 💻 Usage
+
+`/grab sticker <sticker_id>`
+`/grab emoji <emoji>`
+
+### 🔧 Subcommands
+
+**`/grab sticker <sticker_id>`**
+> grab a sticker from a message
+
+**Options for this subcommand:**
+- **`sticker_id*`**
+  - **Description:** Sticker ID to grab
+  - **Type:** Text
+**`/grab emoji <emoji>`**
+> grab a custom emoji from a message
+
+**Options for this subcommand:**
+- **`emoji*`**
+  - **Description:** Emoji to grab (custom emoji format)
+  - **Type:** Text
+
+
 ### 💾 `/help`
 
 **Description:** 💡 Displays a list of bot commands with complete details.
@@ -221,30 +258,9 @@
 
 
 
-### 💾 `/spam`
-
-**Description:** 💬 Mass send messages to this channel.
-
-### 💻 Usage
-
-`/spam <text> <count> [delay]`
-
-### ⚙️ Options
-
-- **`text*`**
-  - **Description:** Message to send
-  - **Type:** Text
-- **`count*`**
-  - **Description:** How many times to send the message (max 20)
-  - **Type:** Integer
-- **`delay`**
-  - **Description:** Delay between messages (ms, minimum 250)
-  - **Type:** Integer
-
-
 ### 💾 `/stats`
 
-**Description:** 📊 Displays Kythia statistics.
+**Description:** 📊 Displays kythia statistics.
 
 ### 📋 Details
 
@@ -253,33 +269,6 @@
 
 `/stats`
 
-
-
-### 💾 `/steal`
-
-**Description:** 🛍️ Steal stickers or emojis from messages.
-
-### 💻 Usage
-
-`/steal sticker <sticker_id>`
-`/steal emoji <emoji>`
-
-### 🔧 Subcommands
-
-**`/steal sticker <sticker_id>`**
-> Steal a sticker from a message
-
-**Options for this subcommand:**
-- **`sticker_id*`**
-  - **Description:** Sticker ID to steal
-  - **Type:** Text
-**`/steal emoji <emoji>`**
-> Steal a custom emoji from a message
-
-**Options for this subcommand:**
-- **`emoji*`**
-  - **Description:** Emoji to steal (custom emoji format)
-  - **Type:** Text
 
 
 ### 💾 `/userinfo`
@@ -299,7 +288,7 @@
 
 ### 💾 `/vote`
 
-**Description:** ❤️ Vote for Kythia on top.gg!
+**Description:** ❤️ Vote for kythia on top.gg!
 
 ### 📋 Details
 

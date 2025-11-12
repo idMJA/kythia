@@ -13,7 +13,6 @@ module.exports = {
             .setDescription('Add a user to premium')
             .addUserOption((opt) => opt.setName('user').setDescription('User to grant premium').setRequired(true))
             .addIntegerOption((opt) => opt.setName('days').setDescription('Number of premium days (default 30)').setRequired(false)),
-    ownerOnly: true,
     async execute(interaction, container) {
         const { t, models } = container;
         const { KythiaUser } = models;

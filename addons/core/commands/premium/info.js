@@ -13,7 +13,6 @@ module.exports = {
             .setName('info')
             .setDescription('View premium info for a user')
             .addUserOption((opt) => opt.setName('user').setDescription('User to check').setRequired(true)),
-    ownerOnly: true,
     async execute(interaction, container) {
         const { t, kythiaConfig, helpers, models } = container;
         const { embedFooter } = helpers.discord;

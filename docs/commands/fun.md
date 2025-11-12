@@ -15,38 +15,23 @@
   - **Type:** Text
 
 
-### 💾 `/marry`
+### 💾 `/act`
 
-**Description:** 💍 Marriage system commands
+**Description:** 🤗 Perform an anime action with a user
 
 ### 💻 Usage
 
-`/marry propose <user>`
-`/marry divorce`
-`/marry kiss`
-`/marry profile`
+`/act <action> [user]`
 
-### 🔧 Subcommands
+### ⚙️ Options
 
-**`/marry propose <user>`**
-> 💍 Propose to another user
-
-**Options for this subcommand:**
-- **`user*`**
-  - **Description:** The user you want to propose to
+- **`action*`**
+  - **Description:** The action to perform
+  - **Type:** Text
+  - **Choices:** `Hug` (`hug`), `Kiss` (`kiss`), `Pat` (`pat`), `Slap` (`slap`), `Cuddle` (`cuddle`), `Wave` (`wave`), `High Five` (`highfive`), `Handhold` (`handhold`), `Bite` (`bite`), `Bonk` (`bonk`), `Yeet` (`yeet`), `Dance` (`dance`), `Poke` (`poke`), `Wink` (`wink`), `Lick` (`lick`), `Smile` (`smile`), `Blush` (`blush`), `Happy` (`happy`), `Cry` (`cry`), `Nom` (`nom`), `Kill` (`kill`), `Kick` (`kick`), `Smug` (`smug`), `Cringe` (`cringe`), `Bully` (`bully`)
+- **`user`**
+  - **Description:** The user to perform the action on
   - **Type:** User
-**`/marry divorce`**
-> 💔 End your current marriage
-
-
-**`/marry kiss`**
-> 😘 Kiss your partner
-
-
-**`/marry profile`**
-> 👰 View your marriage profile
-
-
 
 
 ### 💾 `/tictactoe`

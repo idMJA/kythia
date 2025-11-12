@@ -9,8 +9,6 @@ const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('disc
 const { Op } = require('sequelize');
 module.exports = {
     data: (subcommand) => subcommand.setName('list').setDescription('View list of premium users'),
-
-    ownerOnly: true,
     async execute(interaction, container) {
         const { t, kythiaConfig, helpers, models } = container;
         const { embedFooter } = helpers.discord;

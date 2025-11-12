@@ -12,7 +12,6 @@ module.exports = {
             .setName('delete')
             .setDescription('Remove a user from premium')
             .addUserOption((opt) => opt.setName('user').setDescription('User to remove premium from').setRequired(true)),
-    ownerOnly: true,
     async execute(interaction, container) {
         const { t, models } = container;
         const { KythiaUser } = models;

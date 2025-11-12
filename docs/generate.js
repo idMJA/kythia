@@ -6,23 +6,18 @@
  * @version 0.9.11-beta
  */
 
-/**
- * 🚀 Kythia Docs Generator (Pro Edition)
- *
- * This script automatically generates detailed Markdown documentation for all bot commands
- * by reading their source files. It extracts not only the structure (name, options) but
- * also critical metadata like permissions, cooldowns, usage examples, and aliases.
- *
- * @version 0.9.11-beta
- */
-
 require('dotenv').config();
 require('../kythia.config.js');
 require('module-alias/register');
 
 const fs = require('fs');
 const path = require('path');
-const { ApplicationCommandOptionType, PermissionsBitField, SlashCommandSubcommandBuilder } = require('discord.js');
+const {
+    ApplicationCommandOptionType,
+    PermissionsBitField,
+    SlashCommandSubcommandBuilder,
+    SlashCommandSubcommandGroupBuilder,
+} = require('discord.js');
 
 const rootAddonsDir = path.join(__dirname, '..', 'addons');
 const outputDir = path.join(__dirname, 'commands');
@@ -108,7 +103,6 @@ function generateSubcommandDocs(parentName, subData, groupName = null, extraSubM
     const groupPrefix = groupName ? `${groupName} ` : '';
     const subOptions = subData.options || [];
 
-    // Generate placeholder values for the example usage string
     const usageString = subOptions
         .map((opt) => {
             const placeholder = `<${opt.name.toLowerCase()}>`;
@@ -119,9 +113,8 @@ function generateSubcommandDocs(parentName, subData, groupName = null, extraSubM
     let md = `**\`/${parentName} ${groupPrefix}${subData.name}${usageString ? ' ' + usageString : ''}\`**\n`;
     md += `> ${subData.description}\n`;
 
-    // Aliases and metadata for subcommand if provided in extraSubMeta
     if (extraSubMeta && Array.isArray(extraSubMeta.aliases) && extraSubMeta.aliases.length > 0) {
-        md += `> _Aliases: ${extraSubMeta.aliases.map(a => `\`${a}\``).join(', ')}_\n`;
+        md += `> _Aliases: ${extraSubMeta.aliases.map((a) => `\`${a}\``).join(', ')}_\n`;
     }
     if (extraSubMeta && extraSubMeta.ownerOnly) {
         md += `> _Owner Only: Yes_\n`;
@@ -131,11 +124,11 @@ function generateSubcommandDocs(parentName, subData, groupName = null, extraSubM
     }
     if (extraSubMeta && extraSubMeta.permissions && extraSubMeta.permissions.length > 0) {
         const perms = new PermissionsBitField(extraSubMeta.permissions).toArray();
-        md += `> _User Permissions: ${perms.map(p=>`\`${p}\``).join(', ')}_\n`;
+        md += `> _User Permissions: ${perms.map((p) => `\`${p}\``).join(', ')}_\n`;
     }
     if (extraSubMeta && extraSubMeta.botPermissions && extraSubMeta.botPermissions.length > 0) {
         const perms = new PermissionsBitField(extraSubMeta.botPermissions).toArray();
-        md += `> _Bot Permissions: ${perms.map(p=>`\`${p}\``).join(', ')}_\n`;
+        md += `> _Bot Permissions: ${perms.map((p) => `\`${p}\``).join(', ')}_\n`;
     }
     md += '\n';
 
@@ -157,9 +150,8 @@ function generateMetadataDocs(commandModule) {
     let md = '### 📋 Details\n\n';
     let hasMetadata = false;
 
-    // Handle aliases if present
     if (commandModule.aliases && Array.isArray(commandModule.aliases) && commandModule.aliases.length > 0) {
-        md += `- **Aliases:** ${commandModule.aliases.map(a => `\`${a}\``).join(', ')}\n`;
+        md += `- **Aliases:** ${commandModule.aliases.map((a) => `\`${a}\``).join(', ')}\n`;
         hasMetadata = true;
     }
 
@@ -207,7 +199,6 @@ function generateCommandMarkdown(commandJSON, commandModule, subcommandExtraMeta
         (opt) => opt.type !== ApplicationCommandOptionType.Subcommand && opt.type !== ApplicationCommandOptionType.SubcommandGroup
     );
 
-    // --- USAGE SUMMARY SECTION ---
     mdContent += '### 💻 Usage\n\n';
     if (subcommands && subcommands.length > 0) {
         subcommands.forEach((sub) => {
@@ -231,7 +222,6 @@ function generateCommandMarkdown(commandJSON, commandModule, subcommandExtraMeta
         mdContent += `\`/${parentName}\`\n\n`;
     }
 
-    // --- DETAILED BREAKDOWN SECTION ---
     if (subcommands && subcommands.length > 0) {
         mdContent += `### 🔧 Subcommands\n\n`;
         for (const sub of subcommands) {
@@ -259,13 +249,19 @@ function generateCommandMarkdown(commandJSON, commandModule, subcommandExtraMeta
  * @param {string} dirPath - Path to the command directory.
  * @param {string} categoryName - The name of the category/addon.
  */
+/**
+ * ✨ [DIROMBAK] Processes a directory with a split command structure (_command.js).
+ * SEKARANG BISA nanganin subcommand file (.js) DAN subcommand group (folder).
+ * @param {string} dirPath - Path to the command directory.
+ * @param {string} categoryName - The name of the category/addon.
+ */
 function processSplitCommandDirectory(dirPath, categoryName) {
     console.log(`[SPLIT] Assembling '${categoryName}' from folder...`);
     try {
         const baseCommandPath = path.join(dirPath, '_command.js');
         const baseCommandModule = require(baseCommandPath);
 
-        if (baseCommandModule.ownerOnly) {
+        if (baseCommandModule.ownerOnly || baseCommandModule.teamOnly) {
             console.log(`⏩ Ignoring owner-only split command in '${categoryName}'.`);
             return;
         }
@@ -276,43 +272,67 @@ function processSplitCommandDirectory(dirPath, categoryName) {
             return;
         }
 
-        const subcommandFiles = fs.readdirSync(dirPath).filter((file) => file.endsWith('.js') && file !== '_command.js');
-
-        // Mapping: { subcommand name -> meta from subcommandModule (aliases, cooldown, ...)}
         const subcommandExtraMeta = {};
 
-        for (const subFile of subcommandFiles) {
-            const subFilePath = path.join(dirPath, subFile);
-            const subcommandModule = require(subFilePath);
+        const contents = fs.readdirSync(dirPath, { withFileTypes: true });
 
-            // Kumpulkan aliases dan properti meta lain dari setiap subcommand file
-            if (typeof subcommandModule.data === 'function') {
-                const subcommandBuilder = new SlashCommandSubcommandBuilder();
-                subcommandModule.data(subcommandBuilder);
-                mainBuilder.addSubcommand(subcommandBuilder);
+        for (const item of contents) {
+            const itemPath = path.join(dirPath, item.name);
 
-                // Untuk identifikasi nama subcommand yang benar:
-                let subcommandName = null;
-                try {
-                    // If it uses .setName()
-                    subcommandName = subcommandBuilder.name; // Should be set by .setName()
-                } catch (err) {
-                    // fallback to fileName without ext
-                    subcommandName = path.basename(subFile, '.js');
-                }
+            if (item.isFile() && item.name.endsWith('.js') && item.name !== '_command.js') {
+                const subcommandModule = require(itemPath);
 
-                // Get meta information (aliases, ownerOnly, cooldown, permissions, botPermissions)
-                const subMeta = {};
-                if (Array.isArray(subcommandModule.aliases) && subcommandModule.aliases.length > 0) {
-                    subMeta.aliases = subcommandModule.aliases;
+                if (typeof subcommandModule.data === 'function') {
+                    const subcommandBuilder = new SlashCommandSubcommandBuilder();
+                    subcommandModule.data(subcommandBuilder);
+                    mainBuilder.addSubcommand(subcommandBuilder);
+
+                    let subcommandName = subcommandBuilder.name;
+                    if (!subcommandName) subcommandName = path.basename(item.name, '.js');
+
+                    const subMeta = {};
+                    if (Array.isArray(subcommandModule.aliases) && subcommandModule.aliases.length > 0)
+                        subMeta.aliases = subcommandModule.aliases;
+                    if (subcommandModule.ownerOnly) subMeta.ownerOnly = true;
+                    if (subcommandModule.cooldown) subMeta.cooldown = subcommandModule.cooldown;
+                    if (subcommandModule.permissions) subMeta.permissions = subcommandModule.permissions;
+                    if (subcommandModule.botPermissions) subMeta.botPermissions = subcommandModule.botPermissions;
+                    if (Object.keys(subMeta).length > 0) {
+                        subcommandExtraMeta[subcommandName] = subMeta;
+                    }
                 }
-                if (subcommandModule.ownerOnly) subMeta.ownerOnly = true;
-                if (subcommandModule.cooldown) subMeta.cooldown = subcommandModule.cooldown;
-                if (subcommandModule.permissions && subcommandModule.permissions.length > 0) subMeta.permissions = subcommandModule.permissions;
-                if (subcommandModule.botPermissions && subcommandModule.botPermissions.length > 0) subMeta.botPermissions = subcommandModule.botPermissions;
-                if (Object.keys(subMeta).length > 0 && subcommandName) {
-                    subcommandExtraMeta[subcommandName] = subMeta;
+            } else if (item.isDirectory()) {
+                const groupDefPath = path.join(itemPath, '_group.js');
+                if (!fs.existsSync(groupDefPath)) continue;
+
+                const groupModule = require(groupDefPath);
+                const groupBuilder = new SlashCommandSubcommandGroupBuilder();
+                groupModule.data(groupBuilder);
+
+                const subCommandFiles = fs.readdirSync(itemPath).filter((f) => f.endsWith('.js') && !f.startsWith('_'));
+
+                for (const file of subCommandFiles) {
+                    const subCommandPath = path.join(itemPath, file);
+                    const subModule = require(subCommandPath);
+
+                    if (typeof subModule.data === 'function') {
+                        const subBuilder = new SlashCommandSubcommandBuilder();
+                        subModule.data(subBuilder);
+                        groupBuilder.addSubcommand(subBuilder);
+
+                        const subMeta = {};
+                        if (Array.isArray(subModule.aliases) && subModule.aliases.length > 0) subMeta.aliases = subModule.aliases;
+                        if (subModule.ownerOnly) subMeta.ownerOnly = true;
+                        if (subModule.cooldown) subMeta.cooldown = subModule.cooldown;
+                        if (subModule.permissions) subMeta.permissions = subModule.permissions;
+                        if (subModule.botPermissions) subMeta.botPermissions = subModule.botPermissions;
+
+                        if (Object.keys(subMeta).length > 0) {
+                            subcommandExtraMeta[subBuilder.name] = subMeta;
+                        }
+                    }
                 }
+                mainBuilder.addSubcommandGroup(groupBuilder);
             }
         }
 
@@ -345,7 +365,7 @@ function runGenerator() {
                     const filePath = path.join(dirPath, file);
                     const commandModule = require(filePath);
 
-                    if (commandModule.ownerOnly) {
+                    if (commandModule.ownerOnly || commandModule.teamOnly) {
                         console.log(`⏩ Ignoring owner-only command '${file}' in '${categoryName}'.`);
                         continue;
                     }
@@ -354,18 +374,16 @@ function runGenerator() {
 
                     if (!commandBuilder) continue;
 
-                    // Fix: Check if toJSON exists and is a function before calling it
                     let commandJSON;
                     if (typeof commandBuilder.toJSON === 'function') {
                         commandJSON = commandBuilder.toJSON();
                     } else if (typeof commandBuilder === 'object') {
-                        // try to use the plain object directly
                         commandJSON = commandBuilder;
                         console.warn(`⚠️ Command builder for '${file}' in '${categoryName}' does not have toJSON(), using as-is.`);
                     } else {
-                        throw new Error("Command builder is not valid or missing toJSON()");
+                        throw new Error('Command builder is not valid or missing toJSON()');
                     }
-                    
+
                     const markdown = generateCommandMarkdown(commandJSON, commandModule);
 
                     if (!markdownBuffers[categoryName]) {
@@ -392,7 +410,14 @@ function runGenerator() {
         } else if (addon.name === 'core') {
             const coreCategories = fs.readdirSync(commandsPath, { withFileTypes: true }).filter((dirent) => dirent.isDirectory());
             for (const category of coreCategories) {
-                processSimpleDirectory(path.join(commandsPath, category.name), category.name);
+                const categoryPath = path.join(commandsPath, category.name);
+                const baseCommandPathInCore = path.join(categoryPath, '_command.js');
+
+                if (fs.existsSync(baseCommandPathInCore)) {
+                    processSplitCommandDirectory(categoryPath, category.name);
+                } else {
+                    processSimpleDirectory(categoryPath, category.name);
+                }
             }
         } else {
             processSimpleDirectory(commandsPath, categoryName);

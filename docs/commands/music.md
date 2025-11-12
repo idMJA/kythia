@@ -6,6 +6,7 @@
 
 ### 📋 Details
 
+- **Aliases:** `music`, `m`, `🎵`
 - **Cooldown:** 15 seconds
 - **User Permissions:** `ViewChannel`, `SendMessages`, `Connect`, `Speak`
 - **Bot Permissions:** `SendMessages`, `Connect`, `Speak`
@@ -44,6 +45,7 @@
 `/music favorite list`
 `/music favorite add <search>`
 `/music favorite remove <name>`
+`/music 247`
 
 ### 🔧 Subcommands
 
@@ -226,7 +228,7 @@
 
 **Options for this subcommand:**
 - **`time*`**
-  - **Description:** The time to seek to in seconds. eg. 10 30
+  - **Description:** The time to seek to. eg. 10, 2:30, 1:20:30
   - **Type:** Integer
 **`/music favorite play [<append>]`**
 > 🎶 Play all songs from your favorites.
@@ -253,5 +255,9 @@
 - **`name*`**
   - **Description:** The name of the song to remove.
   - **Type:** Text
+**`/music 247`**
+> 🎧 Enable or disable 24/7 mode to keep the bot in the voice channel.
+
+
 
 

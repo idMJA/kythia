@@ -6,10 +6,15 @@
 
 ### 💻 Usage
 
+`/globalchat info`
 `/globalchat remove`
 `/globalchat setup [channel]`
 
 ### 🔧 Subcommands
+
+**`/globalchat info`**
+> Show stats and information for the Kythia Global Chat network!
+
 
 **`/globalchat remove`**
 > Remove this server from the global chat network

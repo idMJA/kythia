@@ -12,7 +12,6 @@ module.exports = {
             .setName('edit')
             .setDescription('Edit a premium user')
             .addUserOption((opt) => opt.setName('user').setDescription('User to edit premium access').setRequired(true)),
-    ownerOnly: true,
     async execute(interaction, container) {
         const { t, models } = container;
         const { KythiaUser } = models;
