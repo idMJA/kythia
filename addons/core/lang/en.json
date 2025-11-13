@@ -4929,5 +4929,19 @@
             "enabled": "## 🎙️ **Stage Mode Enabled!**\nOnly you and trusted users can speak now.",
             "disabled": "## 🎙️ **Stage Mode Disabled.**\nEveryone can speak again."
         }
+    },
+    "questnotifier": {
+        "setup": {
+            "success": "✅ **Quest Notifier Enabled!**\nNew Discord Quests will be posted in <#{channel}>.\nRole to mention: {role}",
+            "no_role": "None"
+        },
+        "unset": {
+            "not_setup": "ℹ️ Quest Notifier system has not been set up yet.",
+            "success": "🗑️ **Quest Notifier Disabled.** You will no longer receive notifications."
+        },
+        "trigger": {
+            "success": "✅ Manual quest check triggered! Check the console and the target channel.",
+            "fail": "❌ Failed to manually trigger quest check. See console for errors."
+        }
     }
 }

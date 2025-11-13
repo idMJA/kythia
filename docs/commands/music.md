@@ -229,7 +229,7 @@
 **Options for this subcommand:**
 - **`time*`**
   - **Description:** The time to seek to. eg. 10, 2:30, 1:20:30
-  - **Type:** Integer
+  - **Type:** Text
 **`/music favorite play [<append>]`**
 > 🎶 Play all songs from your favorites.
 
