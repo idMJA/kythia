@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/ticket/commands/ticket.js
+ * @namespace: addons/ticket/commands/type/create.js
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
@@ -37,7 +37,7 @@ module.exports = {
             new ContainerBuilder()
                 .setAccentColor(accentColor)
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'ticket.type.start_title')))
-                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                // .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(await t(interaction, 'ticket.type.start_desc')))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addActionRowComponents(new ActionRowBuilder().addComponents(startButton))

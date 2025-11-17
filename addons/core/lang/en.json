@@ -1806,7 +1806,8 @@
             "modal_show_failed": "## ❌ Error\nFailed to display the setup modal. Please try again.",
             "no_message_id": "## ❌ Error\nCould not find the original setup message. Please restart the setup.",
             "setup_expired": "## ❌ Error\nYour setup session has expired. Please restart the setup.",
-            "invalid_selection": "## ❌ Error\nInvalid ticket selection. Please try again."
+            "invalid_selection": "## ❌ Error\nInvalid ticket selection. Please try again.",
+            "only_staff": "## ❌ Error\nOnly staff members can claim this ticket."
         },
         "create": {
             "success": "## ✅ Ticket Created\nYour ticket has been successfully created: {ticketChannel}"
@@ -1825,10 +1826,10 @@
         },
         "type": {
             "start_title": "## 🎟️ Create Ticket Type (Step 1/2)",
-            "start_desc": "Welcome to the Ticket Type Setup Wizard! This step will help you choose which **Panel** you want to add your new ticket type to. Select a panel from the options below to continue. Once selected, you'll be guided to configure the details for your new ticket type.",
+            "start_desc": "Welcome to the Ticket Type Setup Wizard! Just press the **Start Setup** button below to begin configuring your new ticket type.",
             "start_button": "Start Setup (Step 1/2)",
             "step2_title": "## 🎟️ Create Ticket Type (Step 2/2)",
-            "step2_desc": "Step 1 complete. Click the button below to configure staff roles and log channels.",
+            "step2_desc": "**Step 2**. Click the button below to configure staff roles, logs channel, transcript channel, and ticket category channel.",
             "next_button": "Continue Setup (Step 2/2)"
         },
         "transcript": {
@@ -1841,7 +1842,24 @@
         "v2": {
             "open_message_default": "Hello {user}, staff <@&{staffRoleId}> will be with you shortly.",
             "close_button": "Close Ticket",
-            "log_message": "## 🔒 Ticket #{ticketId} Closed\n**Ticket Type:** {typeName}\n**Opened By:** <@{userId}>\n**Opened At:** {openedAt}\n**Closed By:** <@{closerId}>."
+            "close_with_reason_button": "Close With Reason",
+            "claim_button": "Claim",
+            "log_message": "## 🔒 Ticket #{ticketId} Closed\n**Ticket Type:** {typeName}\n**Opened By:** <@{userId}>\n**Opened At:** {openedAt}\n**Closed By:** <@{closerId}>\n**Close Reason:** {reason}",
+            "reason_field": "### Reason:\n{reason}"
+        },
+        "reason_modal": {
+            "title": "Open a New Ticket",
+            "desc": "Please provide your answer below.",
+            "placeholder": "Write your answer here..."
+        },
+        "claim_modal": {
+            "title": "Close Ticket with Reason",
+            "label": "What is the reason for closing this ticket?",
+            "placeholder": "Example: Issue resolved, user unresponsive..."
+        },
+        "claim": {
+            "success": "## 🛄 Ticket Claimed\nThis ticket will now be handled by {user}.",
+            "already_claimed": "## ❌ Error\nThis ticket has already been claimed by <@{userId}>."
         }
     },
     "music": {

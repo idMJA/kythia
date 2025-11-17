@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/ticket/commands/ticket.js
+ * @namespace: addons/ticket/commands/panel/ticket.js
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa

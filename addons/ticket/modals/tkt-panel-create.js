@@ -3,7 +3,7 @@
  * @type: Module
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 1.0.0-clean-edit
+ * @version 0.9.12-beta
  */
 const {
     ContainerBuilder,

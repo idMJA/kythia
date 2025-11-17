@@ -6,7 +6,7 @@
  * @version 0.9.12-beta
  */
 const { createTicketChannel } = require('../helpers');
-const { MessageFlags } = require('discord.js');
+const { MessageFlags, ModalBuilder, LabelBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 
 module.exports = {
     execute: async (interaction, container) => {
@@ -32,6 +32,27 @@ module.exports = {
             });
         }
 
-        await createTicketChannel(interaction, ticketConfig, container);
+        if (ticketConfig.askReason && ticketConfig.askReason.length > 0) {
+            const modal = new ModalBuilder()
+                .setCustomId(`tkt-open-reason:${configId}`)
+                .setTitle(await t(interaction, 'ticket.reason_modal.title'))
+                .addLabelComponents(
+                    new LabelBuilder()
+                        .setLabel(ticketConfig.askReason)
+                        .setDescription(await t(interaction, 'ticket.reason_modal.desc'))
+                        .setTextInputComponent(
+                            new TextInputBuilder()
+                                .setCustomId('reason')
+                                .setStyle(TextInputStyle.Paragraph)
+                                .setPlaceholder(await t(interaction, 'ticket.reason_modal.placeholder'))
+                                .setRequired(true)
+                                .setMinLength(10)
+                                .setMaxLength(1024)
+                        )
+                );
+            await interaction.showModal(modal);
+        } else {
+            await createTicketChannel(interaction, ticketConfig, container, null);
+        }
     },
 };

@@ -3,7 +3,7 @@
  * @type: Helper Script
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
- * @version 1.0.0 (V2 Container Update)
+ * @version 0.9.12-beta
  */
 
 const {
@@ -50,13 +50,13 @@ async function refreshTicketPanel(panelMessageId, container) {
             .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## ${panel.title}`))
             .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
             .addTextDisplayComponents(new TextDisplayBuilder().setContent(description))
-            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false));
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
 
         if (panel.image && (panel.image.startsWith('http://') || panel.image.startsWith('https://'))) {
             panelContainer.addMediaGalleryComponents(
                 new MediaGalleryBuilder().addItems([new MediaGalleryItemBuilder().setURL(panel.image)])
             );
-            panelContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false));
+            panelContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
         }
 
         if (!allTypes || allTypes.length === 0) {
@@ -85,7 +85,11 @@ async function refreshTicketPanel(panelMessageId, container) {
             panelContainer.addActionRowComponents(actionRow);
         }
 
-        // Fetch channel and message after all type checks
+        panelContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+        panelContainer.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(await t(fakeInteraction, 'common.container.footer', { username: kythiaConfig.bot.name }))
+        );
+
         const channel = await container.client.channels.fetch(panel.channelId).catch(() => null);
         if (!channel) throw new Error(`Channel ${panel.channelId} not found.`);
         const message = await channel.messages.fetch(panel.messageId).catch(() => null);
@@ -106,7 +110,7 @@ async function refreshTicketPanel(panelMessageId, container) {
  * @param {object} ticketConfig - Ticket config entry
  * @param {object} container - Dependency injection object
  */
-async function createTicketChannel(interaction, ticketConfig, container) {
+async function createTicketChannel(interaction, ticketConfig, container, reason = null) {
     const { models, t, kythiaConfig, helpers } = container;
     const { Ticket } = models;
     const { simpleContainer } = helpers.discord;
@@ -145,7 +149,6 @@ async function createTicketChannel(interaction, ticketConfig, container) {
             ],
         });
 
-        // Build open message
         const defaultMessage = await t(interaction, 'ticket.v2.open_message_default', {
             user: interaction.user.toString(),
             staffRoleId: ticketConfig.staffRoleId,
@@ -192,7 +195,12 @@ async function createTicketChannel(interaction, ticketConfig, container) {
         });
 
         mainContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(openMessage));
-
+        if (reason != null) {
+            mainContainer.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(await t(interaction, 'ticket.v2.reason_field', { reason: reason }))
+            );
+            mainContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+        }
         mainContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
         mainContainer.addActionRowComponents(closeButton);
         mainContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
@@ -264,8 +272,9 @@ async function createTicketTranscript(channel, container) {
  * Closes the ticket, creates a transcript, logs actions, and deletes the channel.
  * @param {object} interaction - Interaction object
  * @param {object} container - Dependency injection (models, etc)
+ * @param {string | null} reason - The reason for closing (jika ada)
  */
-async function closeTicket(interaction, container) {
+async function closeTicket(interaction, container, reason = null) {
     const { models, t, helpers, kythiaConfig } = container;
     const { Ticket, TicketConfig } = models;
     const { simpleContainer } = helpers.discord;
@@ -278,6 +287,13 @@ async function closeTicket(interaction, container) {
         });
         if (!ticket) {
             const desc = await t(interaction, 'ticket.errors.not_a_ticket');
+
+            if (interaction.replied || interaction.deferred) {
+                return interaction.followUp({
+                    components: await simpleContainer(interaction, desc, { color: 'Red' }),
+                    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                });
+            }
             return interaction.reply({
                 components: await simpleContainer(interaction, desc, { color: 'Red' }),
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
@@ -287,6 +303,13 @@ async function closeTicket(interaction, container) {
         const ticketConfig = await TicketConfig.getCache({ id: ticket.ticketConfigId });
         if (!ticketConfig) {
             const desc = await t(interaction, 'ticket.errors.config_missing');
+
+            if (interaction.replied || interaction.deferred) {
+                return interaction.followUp({
+                    components: await simpleContainer(interaction, desc, { color: 'Red' }),
+                    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                });
+            }
             return interaction.reply({
                 components: await simpleContainer(interaction, desc, { color: 'Red' }),
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
@@ -298,23 +321,31 @@ async function closeTicket(interaction, container) {
 
         if (!transcriptChannel) {
             const desc = await t(interaction, 'ticket.errors.transcript_channel_missing', { channelId: ticketConfig.transcriptChannelId });
+
+            if (interaction.replied || interaction.deferred) {
+                return interaction.followUp({
+                    components: await simpleContainer(interaction, desc, { color: 'Red' }),
+                    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                });
+            }
             return interaction.reply({
                 components: await simpleContainer(interaction, desc, { color: 'Red' }),
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
             });
         }
 
-        await interaction.reply({
-            content: await t(interaction, 'ticket.close.thinking'),
-            ephemeral: true,
-        });
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: await t(interaction, 'ticket.close.thinking'),
+                ephemeral: true,
+            });
+        }
 
         const transcriptText = await createTicketTranscript(interaction.channel, container);
         const filename = `transcript-${ticket.id}.txt`;
         const transcriptBuffer = Buffer.from(transcriptText, 'utf-8');
 
         const accentColor = convertColor(kythiaConfig.bot.color, { from: 'hex', to: 'decimal' });
-
         const title = await t(interaction, 'ticket.transcript.title', {
             ticketId: ticket.id,
             typeName: ticketConfig.typeName,
@@ -323,9 +354,7 @@ async function closeTicket(interaction, container) {
         const footerText = await t(interaction, 'common.container.footer', {
             username: interaction.client.user.username,
         });
-        const attachment = new AttachmentBuilder(transcriptBuffer)
-            .setName(filename)
-            .setDescription(`Transcript for ticket #${ticket.id} (${ticketConfig.typeName})`);
+        const attachment = new AttachmentBuilder(transcriptBuffer).setName(filename).setDescription(/* ... */);
         const fileComponent = new FileBuilder().setURL(`attachment://${filename}`).setSpoiler(false);
 
         const v2Components = [
@@ -334,9 +363,7 @@ async function closeTicket(interaction, container) {
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(title))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(userLine))
-                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
                 .addFileComponents(fileComponent)
-                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(footerText)),
         ];
 
@@ -353,7 +380,9 @@ async function closeTicket(interaction, container) {
                 userId: ticket.userId,
                 openedAt: `<t:${Math.floor(ticket.openedAt / 1000)}:R>`,
                 closerId: interaction.user.id,
+                reason: reason ? reason : 'No Reason Specified',
             });
+
             await logsChannel.send({
                 components: await simpleContainer(interaction, logDesc),
                 flags: MessageFlags.IsComponentsV2,
@@ -362,6 +391,7 @@ async function closeTicket(interaction, container) {
 
         ticket.status = 'closed';
         ticket.closedAt = Date.now();
+        ticket.closedReason = reason;
         ticket.closedByUserId = interaction.user.id;
 
         await ticket.saveAndUpdateCache();

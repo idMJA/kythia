@@ -56,8 +56,8 @@ module.exports = {
             const nextButton = new ButtonBuilder()
                 .setCustomId('tkt-type-step2-show')
                 .setLabel(await t(interaction, 'ticket.type.next_button'))
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('⚙️');
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('🎟️');
 
             const components = [
                 new ContainerBuilder()

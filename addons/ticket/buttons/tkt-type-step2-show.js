@@ -6,7 +6,7 @@
  * @version 0.9.12-beta
  */
 
-const { ModalBuilder, LabelBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlags } = require('discord.js');
+const { ModalBuilder, LabelBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlags, TextInputBuilder, TextInputStyle } = require('discord.js');
 
 module.exports = {
     execute: async (interaction, container) => {
@@ -70,6 +70,16 @@ module.exports = {
                                 .setRequired(false)
                                 .setMinValues(0)
                                 .setMaxValues(1)
+                        ),
+                    new LabelBuilder()
+                        .setLabel('Ticket Creator Reason Question')
+                        .setDescription('If filled, the user will be prompted. If empty, the ticket will be created immediately.')
+                        .setTextInputComponent(
+                            new TextInputBuilder()
+                                .setCustomId('askReason')
+                                .setStyle(TextInputStyle.Paragraph)
+                                .setPlaceholder('Example: What issue are you experiencing? Please explain in detail.')
+                                .setRequired(false)
                         )
                 );
 

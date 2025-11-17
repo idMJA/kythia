@@ -23,7 +23,7 @@ class TicketConfig extends KythiaModel {
                 ticketCategoryId: { type: DataTypes.STRING, allowNull: true },
                 ticketOpenMessage: { type: DataTypes.TEXT, allowNull: true },
                 ticketOpenImage: { type: DataTypes.STRING, allowNull: true },
-                askReason: { type: DataTypes.STRING, allowNull: true },
+                askReason: { type: DataTypes.STRING, allowNull: true, defaultValue: null },
             },
             {
                 sequelize,

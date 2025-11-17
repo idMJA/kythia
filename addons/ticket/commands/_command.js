@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/pro/commands/_command.js
+ * @namespace: addons/ticket/commands/_command.js
  * @type: Command Group Definition
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa

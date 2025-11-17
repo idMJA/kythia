@@ -37,6 +37,7 @@ module.exports = {
             const logsChannelId = interaction.fields.getSelectedChannels('logsChannelId')?.first()?.id;
             const transcriptChannelId = interaction.fields.getSelectedChannels('transcriptChannelId')?.first()?.id;
             const ticketCategoryId = interaction.fields.getSelectedChannels('ticketCategoryId')?.first()?.id;
+            const askReason = interaction.fields.getTextInputValue('askReason') || null;
 
             if (!staffRoleId || !logsChannelId || !transcriptChannelId) {
                 const desc = await t(interaction, 'ticket.errors.mega_modal_missing');
@@ -53,6 +54,7 @@ module.exports = {
                 logsChannelId: logsChannelId,
                 transcriptChannelId: transcriptChannelId,
                 ticketCategoryId: ticketCategoryId || null,
+                askReason: askReason,
             });
 
             await refreshTicketPanel(step1Data.panelMessageId, container);

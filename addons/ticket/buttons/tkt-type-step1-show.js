@@ -61,7 +61,7 @@ module.exports = {
                             new TextInputBuilder()
                                 .setCustomId('typeEmoji')
                                 .setStyle(TextInputStyle.Short)
-                                .setPlaceholder('e.g. 🐛')
+                                .setPlaceholder('e.g. 🎟️')
                                 .setRequired(false)
                         ),
                     new LabelBuilder()

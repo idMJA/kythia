@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/pro/commands/dns/_group.js
+ * @namespace: addons/ticket/commands/panel/_group.js
  * @type: Subcommand Group Definition
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa

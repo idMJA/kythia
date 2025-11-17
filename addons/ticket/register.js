@@ -34,10 +34,15 @@ const initialize = (bot) => {
         bot.registerModalHandler('tkt-type-step1-submit', tktTypeStep1Submit.execute);
         bot.registerButtonHandler('tkt-type-step2-show', tktTypeStep2Show.execute);
         bot.registerModalHandler('tkt-type-step2-submit', tktTypeStep2Submit.execute);
-
         summary.push(
             "  └─ Type Setup: 'tkt-type-step1-show', 'tkt-type-step1-submit', 'tkt-type-step2-show', 'tkt-type-step2-submit' (Multi-Modal Flow)"
         );
+
+        bot.registerButtonHandler('ticket-close-with-reason', require('./buttons/ticket-close-with-reason.js').execute);
+        bot.registerModalHandler('tkt-close-reason-submit', require('./modals/tkt-close-reason-submit.js').execute);
+        bot.registerModalHandler('tkt-open-reason', require('./modals/tkt-open-reason.js').execute);
+        bot.registerButtonHandler('ticket-claim', require('./buttons/ticket-claim.js').execute);
+        summary.push("  └─ Interaction: 'ticket-close-with-reason', 'tkt-close-reason-submit', 'ticket-claim' (Staff Facing)");
     } catch (error) {
         console.error('Failed to register ticket handlers:', error);
     }
