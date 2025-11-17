@@ -1,5 +1,5 @@
 /**
- * @namespace: addons/ticket/commands/panel/ticket.js
+ * @namespace: addons/ticket/commands/panel/create.js
  * @type: Command
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
@@ -20,7 +20,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-    data: (subcommand) => subcommand.setName('create').setDescription('Creates a new V2 ticket panel (interactive setup)'),
+    data: (subcommand) => subcommand.setName('create').setDescription('Creates a new ticket panel (interactive setup)'),
 
     async execute(interaction, container) {
         const { models, t, kythiaConfig, redis, helpers } = container;

@@ -1826,7 +1826,9 @@
             "no_types": "Use `/ticket type create` to add options to this panel.",
             "create_success": "## ✅ Success\nPanel V2 created successfully in {channel}. Use `/ticket type create` to add ticket types to it.",
             "select_placeholder": "Select a ticket type...",
-            "default_desc": "Please select the type of ticket you need below."
+            "default_desc": "Please select the type of ticket you need below.",
+            "reload_success": "## ✅ Refreshed\nTicket panel `{id}` has been successfully updated.",
+            "delete_success": "## ✅ Deleted\nPanel **{title}** and all its ticket types have been deleted."
         },
         "type": {
             "start_title": "## 🎟️ Create Ticket Type (Step 1/2)",
@@ -1834,7 +1836,8 @@
             "start_button": "Start Setup (Step 1/2)",
             "step2_title": "## 🎟️ Create Ticket Type (Step 2/2)",
             "step2_desc": "**Step 2**. Click the button below to configure staff roles, logs channel, transcript channel, and ticket category channel.",
-            "next_button": "Continue Setup (Step 2/2)"
+            "next_button": "Continue Setup (Step 2/2)",
+            "delete_success": "## ✅ Deleted\nTicket type **{typeName}** has been deleted."
         },
         "transcript": {
             "title": "## Ticket Transcript #{ticketId} ({typeName})",
