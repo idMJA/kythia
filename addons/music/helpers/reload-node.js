@@ -1,15 +1,15 @@
 /**
- * @namespace: addons/music/helpers/reloadNode.js
+ * @namespace: addons/music/helpers/reload-node.js
  * @type: Helper Script
  * @copyright © 2025 kenndeclouv
  * @assistant chaa & graa
  * @version 0.9.12-beta
  */
 
-const logger = require('@coreHelpers/logger');
-const { reloadConfig } = require('../../core/helpers/reload_config');
+const { reloadConfig } = require('@coreHelpers/reload-config');
 
 async function reloadLavalinkNodes(client) {
+    const logger = client.container.logger;
     logger.info('🔄 Attempting to reload Lavalink nodes...');
     reloadConfig();
 

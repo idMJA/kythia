@@ -37,6 +37,4 @@ class PlaylistTrack extends KythiaModel {
     }
 }
 
-// PlaylistTrack.init(sequelize);
-
 module.exports = PlaylistTrack;

@@ -6,32 +6,7 @@
  * @version 0.9.12-beta
  */
 const { SlashCommandBuilder, GuildMember, PermissionFlagsBits, InteractionContextType } = require('discord.js');
-const {
-    handlePlay,
-    handlePause,
-    handleResume,
-    handleSkip,
-    handleStop,
-    handleQueue,
-    handleNowPlaying,
-    handleLoop,
-    handleAutoplay,
-    handleVolume,
-    handleShuffle,
-    handleBack,
-    handleFilter,
-    handleRemove,
-    handleMove,
-    handleClear,
-    handleSeek,
-    handlePlaylist,
-    handleLyrics,
-    handleFavorite,
-    handleDownload,
-    handle247,
-    handleRadio,
-} = require('../helpers/handlers');
-const { formatDuration, hasControlPermission } = require('../helpers');
+const { formatTrackDuration, hasControlPermission } = require('../helpers');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -310,7 +285,7 @@ module.exports = {
      * @param {import('discord.js').Client} client
      */
     async autocomplete(interaction, container) {
-        const { client, logger, t, models } = container;
+        const { client, logger, t, models, musicHandlers } = container;
         const { Favorite, Playlist } = models;
         const focusedOption = interaction.options.getFocused(true);
         const focusedValue = focusedOption.value;
@@ -374,7 +349,7 @@ module.exports = {
                     return interaction.respond([]);
                 }
                 const choices = res.tracks.slice(0, kythia.addons.music.autocompleteLimit).map((choice) => ({
-                    name: `🎵 ${choice.info.title.length > 80 ? choice.info.title.slice(0, 77) + '…' : choice.info.title} [${formatDuration(choice.info.length)}]`,
+                    name: `🎵 ${choice.info.title.length > 80 ? choice.info.title.slice(0, 77) + '…' : choice.info.title} [${formatTrackDuration(choice.info.length)}]`,
                     value: choice.info.uri,
                 }));
                 searchCache.set(focusedValue, choices);
@@ -479,7 +454,7 @@ module.exports = {
      */
     async execute(interaction, container) {
         const { client, member, guild, options, channel } = interaction;
-        const { logger, t, music } = container;
+        const { logger, t, music, musicHandlers } = container;
         const subcommand = options.getSubcommand();
         const subcommandGroup = options.getSubcommandGroup(false) || false;
 
@@ -490,18 +465,18 @@ module.exports = {
         const player = client.poru.players.get(guild.id);
 
         if (subcommandGroup && subcommandGroup === 'playlist') {
-            return handlePlaylist(interaction, player);
+            return musicHandlers.handlePlaylist(interaction, player);
         }
 
         if (subcommandGroup && subcommandGroup === 'favorite') {
-            return handleFavorite(interaction, player);
+            return musicHandlers.handleFavorite(interaction, player);
         }
 
         if (!subcommandGroup && subcommand == 'play') {
-            return handlePlay(interaction);
+            return musicHandlers.handlePlay(interaction);
         }
         if (!subcommandGroup && subcommand == 'radio') {
-            return handleRadio(interaction, player);
+            return musicHandlers.handleRadio(interaction, player);
         }
 
         if (!player) {
@@ -511,9 +486,9 @@ module.exports = {
             return interaction.reply({ content: await t(interaction, 'music.music.required'), ephemeral: true });
         }
         const everyoneCommandHandlers = {
-            nowplaying: handleNowPlaying,
-            lyrics: handleLyrics,
-            queue: handleQueue,
+            nowplaying: musicHandlers.handleNowPlaying,
+            lyrics: musicHandlers.handleLyrics,
+            queue: musicHandlers.handleQueue,
         };
 
         if (everyoneCommandHandlers[subcommand]) {
@@ -528,28 +503,26 @@ module.exports = {
         }
 
         const originalRequesterCommandHandlers = {
-            pause: handlePause,
-            resume: handleResume,
-            skip: handleSkip,
-            stop: handleStop,
-            loop: handleLoop,
-            autoplay: handleAutoplay,
-            volume: handleVolume,
-            shuffle: handleShuffle,
-            filter: handleFilter,
-            // back: handleBack,
-            remove: handleRemove,
-            move: handleMove,
-            clear: handleClear,
-            seek: handleSeek,
-            download: handleDownload,
-            247: handle247,
+            pause: musicHandlers.handlePause,
+            resume: musicHandlers.handleResume,
+            skip: musicHandlers.handleSkip,
+            stop: musicHandlers.handleStop,
+            loop: musicHandlers.handleLoop,
+            autoplay: musicHandlers.handleAutoplay,
+            volume: musicHandlers.handleVolume,
+            shuffle: musicHandlers.handleShuffle,
+            filter: musicHandlers.handleFilter,
+            remove: musicHandlers.handleRemove,
+            move: musicHandlers.handleMove,
+            clear: musicHandlers.handleClear,
+            seek: musicHandlers.handleSeek,
+            247: musicHandlers.handle247,
         };
 
         if (originalRequesterCommandHandlers[subcommand]) {
             return originalRequesterCommandHandlers[subcommand](interaction, player);
         } else if (subcommand == 'back') {
-            return handleBack(interaction, player, music.guildStates);
+            return musicHandlers.handleBack(interaction, player, music.guildStates);
         } else {
             return interaction.reply({ content: await t(interaction, 'music.music.subcommand.not.found'), ephemeral: true });
         }

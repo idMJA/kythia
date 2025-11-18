@@ -5,18 +5,16 @@
  * @assistant chaa & graa
  * @version 0.9.12-beta
  */
-const { YoutubeTranscript } = require('youtube-transcript');
-const logger = require('@coreHelpers/logger');
 const { generateContent } = require('@addons/ai/helpers/gemini');
+const { YoutubeTranscript } = require('youtube-transcript');
 const { PermissionFlagsBits } = require('discord.js');
-const { isOwner } = require('@coreHelpers/discord');
 
 /**
  * ⏱️ Formats a duration in milliseconds to a human-readable string (hh:mm:ss or mm:ss).
  * @param {number} ms - Duration in milliseconds.
  * @returns {string} Formatted duration string.
  */
-function formatDuration(ms) {
+function formatTrackDuration(ms) {
     if (typeof ms !== 'number' || isNaN(ms) || ms < 0) return '0:00';
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
@@ -35,19 +33,15 @@ function formatDuration(ms) {
  * @returns {string} Progress bar string with current and total duration.
  */
 function createProgressBar(player) {
-    // === PERUBAHAN UTAMA DI SINI ===
-    // Menggunakan player.currentTrack, bukan player.queue.current
     if (!player.currentTrack || !player.currentTrack.info.length) return '';
 
-    // Mengecek isStream dari info lagu
     if (player.currentTrack.info.isStream) return '`00:00|▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬🔴 LIVE`';
 
     const current = player.position;
-    // Mengambil durasi dari info.length
+
     const total = player.currentTrack.info.length;
     const size = 25;
 
-    // Logika di bawah ini sudah benar, tidak perlu diubah
     let percent = Math.round((current / total) * size);
 
     if (percent < 0) percent = 0;
@@ -57,7 +51,7 @@ function createProgressBar(player) {
     const safeEmpty = empty < 0 ? 0 : empty;
 
     const progress = '▬'.repeat(percent) + '🔵' + '▬'.repeat(safeEmpty);
-    return `\`${formatDuration(current)}|${progress}|${formatDuration(total)}\``;
+    return `\`${formatTrackDuration(current)}|${progress}|${formatTrackDuration(total)}\``;
 }
 
 /**
@@ -67,23 +61,19 @@ function createProgressBar(player) {
  * @param {string} trackUri - The URI of the YouTube video.
  * @returns {Promise<string>} The generated lyrics.
  */
-async function generateLyricsWithTranscript(artist, title, trackUri) {
+async function generateLyricsWithTranscript(container, artist, title, trackUri) {
+    const { logger } = container;
     let transcriptText = null;
     let transcript = null;
     try {
-        // 1. Try to fetch transcript from YouTube video
         transcript = await YoutubeTranscript.fetchTranscript(trackUri);
         if (transcript && transcript.length > 0) {
-            // Join all transcript lines into a single paragraph
             transcriptText = transcript.map((line) => line.text).join(' ');
         }
     } catch (e) {
         logger.warn(`Can't get transcript for ${trackUri}: ${e.message}`);
-        // If failed, transcriptText remains null
     }
 
-    // console.log(transcriptText);
-    // 2. Build prompt only if transcript is available
     if (!transcriptText) {
         return null;
     }
@@ -95,7 +85,6 @@ async function generateLyricsWithTranscript(artist, title, trackUri) {
 
         Write the lyrics in a coherent, complete, and natural way, matching the style and tone of ${artist}.`;
 
-    // 3. Call AI with the constructed prompt
     try {
         const aiLyrics = await generateContent(prompt);
         return aiLyrics;
@@ -106,36 +95,32 @@ async function generateLyricsWithTranscript(artist, title, trackUri) {
 }
 
 /**
- * 🔒 Cek apakah user punya izin buat mengontrol player.
- * Izin diberikan ke Owner Bot, Admin Server, atau si perequest lagu.
+ * 🔒 Checks if the user has permission to control the player.
+ * Permission is granted to the Bot Owner, Server Admin, or the user who requested the song.
  * @param {import('discord.js').Interaction} interaction
- * @param {object} player - Player Poru
+ * @param {object} player - Poru Player
  * @returns {boolean}
  */
 function hasControlPermission(interaction, player) {
-    // 1. Cek apakah ada lagu yang jalan
-    if (!player.currentTrack) return false; // Seharusnya tidak terjadi, tapi untuk jaga-jaga
+    const { isOwner } = interaction.client.container.helpers.discord;
+    if (!player.currentTrack) return false;
 
-    // 2. Owner bot selalu boleh
     if (isOwner(interaction.user.id)) return true;
 
-    // 3. Admin server selalu boleh
     if (
         interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
         interaction.member.permissions.has(PermissionFlagsBits.Administrator)
     )
         return true;
 
-    // 4. Cek apakah user adalah si perequest lagu
     const requesterId = player.currentTrack.info.requester?.id;
     if (interaction.user.id === requesterId) return true;
 
-    // Jika semua gagal, berarti tidak punya izin
     return false;
 }
 
 module.exports = {
-    formatDuration,
+    formatTrackDuration,
     createProgressBar,
     generateLyricsWithTranscript,
     hasControlPermission,

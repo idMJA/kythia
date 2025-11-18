@@ -40,6 +40,4 @@ class Favorite extends KythiaModel {
     }
 }
 
-// Favorite.init(sequelize);
-
 module.exports = Favorite;

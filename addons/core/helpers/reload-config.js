@@ -6,14 +6,6 @@
  * @version 0.9.12-beta
  */
 
-/**
- * @file src/utils/reload_config.js
- * @description Reloads environment variables from `.env` and refreshes the global `kythia` config
- * by invoking the `loadKythiaConfig` function from `kythia.config.js`.
- * Intended for hot-reloading configuration without restarting the process.
- * © 2025 kenndeclouv — v0.9.8-beta
- */
-
 const dotenv = require('dotenv');
 const path = require('path');
 

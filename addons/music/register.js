@@ -7,16 +7,20 @@
  */
 
 const MusicManager = require('./helpers/MusicManager');
+const MusicHandlers = require('./helpers/MusicHandlers');
 
 module.exports = {
     async initialize(bot) {
         const container = bot.client.container;
         const { logger, models } = container;
         const summary = [];
-        
+
+        container.musicHandlers = new MusicHandlers(container);
+        summary.push('   └─ 🎵 Music Handlers Injected');
+
         container.music = new MusicManager(container);
         await container.music.init();
-        
+
         summary.push('   └─ 🎵 Initialize Music Manager');
 
         bot.addDbReadyHook((sequelize) => {

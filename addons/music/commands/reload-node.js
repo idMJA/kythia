@@ -7,7 +7,7 @@
  */
 
 const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
-const { reloadLavalinkNodes } = require('../helpers/reloadNode');
+const { reloadLavalinkNodes } = require('../helpers/reload-node');
 
 module.exports = {
     data: new SlashCommandBuilder()
