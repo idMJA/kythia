@@ -98,6 +98,28 @@ async function handleFailedGlobalChat(failedGuilds, container) {
                 continue;
             }
 
+            try {
+                logger.info(`🧹 [GlobalChat] Checking for old webhooks in #${channel.name}...`);
+                const webhooks = await channel.fetchWebhooks();
+
+                const kythWebhooks = webhooks.filter((wh) => wh.owner && wh.owner.id === client.user.id);
+
+                if (kythWebhooks.size > 0) {
+                    logger.info(`🧹 [GlobalChat] Found ${kythWebhooks.size} old webhook(s) owned by me. Deleting...`);
+
+                    for (const [id, webhook] of kythWebhooks) {
+                        await webhook
+                            .delete('Cleaning up old Kythia webhooks before creation')
+                            .then(() => logger.debug(`🗑️ [GlobalChat] Deleted old webhook: ${webhook.name} (${webhook.id})`))
+                            .catch((err) => logger.warn(`⚠️ [GlobalChat] Failed to delete old webhook ${webhook.id}:`, err));
+                    }
+                } else {
+                    logger.debug(`✨ [GlobalChat] No old webhooks found to clean.`);
+                }
+            } catch (cleanupError) {
+                logger.warn(`⚠️ [GlobalChat] Error during webhook cleanup (ignoring to proceed):`, cleanupError);
+            }
+
             let newWebhook;
             try {
                 logger.info(`🌏 [GlobalChat] Creating new webhook in #${channel.name} (${channel.id})...`);
