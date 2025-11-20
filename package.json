@@ -16,7 +16,13 @@
     "start:bun": "bun index.js --deploy",
     "kythia": "node kythia-cli.js",
     "format": "biome format --write **/*.js",
-    "fix": "biome check --write **/*.js --unsafe"
+    "fix": "biome check --write **/*.js"
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run format",
+      "npm run fix"
+    ]
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.51.1",
@@ -55,7 +61,8 @@
     "@babel/parser": "^7.28.5",
     "@babel/traverse": "^7.28.5",
     "@biomejs/biome": "^2.3.6",
-    "glob": "^11.0.3"
+    "glob": "^11.0.3",
+    "lint-staged": "^16.2.7"
   },
   "_moduleAliases": {
     "@src": "src",
