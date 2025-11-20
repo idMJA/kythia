@@ -7,10 +7,9 @@
  */
 
 const { DataTypes } = require('sequelize');
-// Adjust connection string
-const { KythiaModel } = require('kythia-core'); // Import KythiaModel
 
-// Extend Giveaway dengan KythiaModel
+const { KythiaModel } = require('kythia-core');
+
 class Giveaway extends KythiaModel {
     static init(sequelize) {
         super.init(
@@ -27,6 +26,7 @@ class Giveaway extends KythiaModel {
                 roleId: { type: DataTypes.STRING, allowNull: true },
                 color: { type: DataTypes.STRING, allowNull: true },
                 endTime: { type: DataTypes.DATE, allowNull: true },
+                description: { type: DataTypes.TEXT, allowNull: true },
             },
             {
                 sequelize,
@@ -39,7 +39,5 @@ class Giveaway extends KythiaModel {
         return this;
     }
 }
-
-// Giveaway.init(sequelize);
 
 module.exports = Giveaway;

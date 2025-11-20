@@ -7,22 +7,19 @@
  */
 
 const GiveawayManager = require('./helpers/GiveawayManager');
+const giveawayJoinButton = require('./buttons/giveaway-join');
 
 module.exports = {
     async initialize(bot) {
         const container = bot.client.container;
         const summary = [];
 
-        // 1. INSTANCE DIBUAT SEKARANG (Biar Button Handler gak error)
         container.giveawayManager = new GiveawayManager(container);
 
-        // 2. Register Button (Aman karena container.giveaway udah ada)
-        bot.registerButtonHandler('giveaway_join', container.giveawayManager.handleJoin.bind(container.giveawayManager));
-        summary.push("   └─ Button: 'giveaway_join'");
-
-        // 3. JALANKAN SCHEDULER SAAT READY (Biar DB aman)
+        bot.registerButtonHandler('giveaway-join', (interaction) => {
+            return giveawayJoinButton.execute(interaction, container);
+        });
         bot.addClientReadyHook(async () => {
-            // Init dipanggil nanti saat bot & DB udah siap 100%
             await container.giveawayManager.init();
         });
 

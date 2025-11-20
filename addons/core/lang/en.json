@@ -3942,19 +3942,10 @@
     },
     "giveaway": {
         "error": {
-            "already": {
-                "joined": "You have already joined this giveaway.",
-                "left": "You have already left this giveaway."
-            }
-        },
-        "end": {
-            "announce": {
-                "desc": "Congratulations to the winners!\n\n**Winners:** {winners}\n**Hosted by:** {host}"
-            }
-        },
-        "reroll": {
-            "announce": {
-                "desc": "New winners have been selected!\n\n**Winners:** {winners}\n**Hosted by:** {host}"
+            "fatal": {
+                "title": "## ❌ Fatal Error",
+                "desc": "A fatal error occurred while trying to create the giveaway. Check the console log.",
+                "join": "❌ A fatal error occurred while joining."
             }
         },
         "no": {
@@ -3962,106 +3953,85 @@
                 "winner": "No valid winners. 😥"
             }
         },
-        "helpers": {
-            "giveawayManager": {
-                "embed": {
-                    "title": "## 🎉 GIVEAWAY",
-                    "desc": "### Prize:\n{prize}\n### Ends:\n{endRelative} ({endFull})\n### Hosted by: {host}\n\n-# Click the button below to participate!",
-                    "ending": {
-                        "soon": "Ending soon..."
-                    },
-                    "footer": {
-                        "id": "Giveaway ID: {id}"
-                    }
-                },
-                "field": {
-                    "winners": "Number of Winners",
-                    "participants": "Current Participants",
-                    "role": {
-                        "requirement": "Role Requirement"
-                    }
-                },
-                "fatal": {
-                    "error": {
-                        "title": "## ❌ Fatal Error",
-                        "desc": "A fatal error occurred while trying to create the giveaway in the database. Check the console log for details."
-                    }
-                }
+        "end": {
+            "announce": {
+                "title": "## 🎉 CONGRATULATIONS!",
+                "desc": "Congratulations to the winners!\n\n**Winners:** {winners}\n**Hosted by:** {host}\n**Prize:** {prize}"
+            }
+        },
+        "ui": {
+            "button": {
+                "join": "Join Giveaway"
+            },
+            "embed": {
+                "title": "## 🎉 {prize}",
+                "desc_active": "**Ends:** <t:{endTime}:R> (<t:{endTime}:F>)\n**Hosted By:** <@{hostId}>\n**Winners:** {winnersCount}",
+                "desc_ended": "**Ended:** <t:{endTime}:R>\n**Hosted By:** <@{hostId}>\n**Winners:** {winners}",
+                "requirement": "\n**Requirement:** <@&{roleId}>",
+                "participants": "👥 **Participants:** {count}",
+                "footer": "Kythia Giveaway System"
+            },
+            "status": {
+                "cancelled": "🚫 CANCELLED"
+            }
+        },
+        "cancel": {
+            "success": "✅ Giveaway has been cancelled successfully.",
+            "announce": {
+                "title": "🚫 GIVEAWAY CANCELLED",
+                "desc": "The giveaway for **{prize}** has been cancelled by the host."
             }
         },
         "giveaway": {
-            "unknown": {
-                "subcommand": {
-                    "title": "## ❌ Unknown Subcommand",
-                    "desc": "The subcommand you used is not recognized."
-                }
-            },
-            "invalid": {
-                "duration": {
-                    "title": "## ❌ Invalid Duration",
-                    "desc": "The duration format you entered is invalid. Use formats like:\n- `10m` (10 minutes)\n- `5h` (5 hours)\n- `1d 12h` (1 day 12 hours)"
-                }
-            },
-            "embed": {
-                "footer": {
-                    "starting": "Giveaway is about to start..."
-                }
-            },
-            "button": {
-                "join": "Join Giveaway!",
-                "cancelled": "Giveaway Cancelled"
-            },
             "start": {
                 "success": {
                     "title": "## 🎉 Giveaway Started!",
                     "desc": "The giveaway has been successfully started."
                 }
             },
+            "invalid": {
+                "duration": {
+                    "title": "## ❌ Invalid Duration",
+                    "desc": "The duration format is invalid. Use formats like `10m`, `5h`, or `1d`."
+                }
+            },
             "not": {
                 "found": {
-                    "title": "## ❌ Giveaway Not Found",
                     "desc": "The giveaway was not found or has already ended."
                 },
                 "ended": {
-                    "title": "## ❌ Giveaway Not Ended",
                     "desc": "This giveaway has not ended yet."
                 }
             },
             "end": {
-                "success": {
-                    "title": "## 🎉 Giveaway Ended",
-                    "desc": "The giveaway has been ended manually."
-                }
-            },
-            "reroll": {
-                "success": {
-                    "title": "## 🎉 Giveaway Rerolled",
-                    "desc": "The giveaway winners have been rerolled!"
-                }
-            },
-            "cancelled": {
-                "title": "## 🎉 GIVEAWAY CANCELLED: {prize}",
-                "desc": "This giveaway has been cancelled by {user}."
-            },
-            "cancel": {
-                "success": {
-                    "title": "## 🎉 Giveaway Cancelled",
-                    "desc": "The giveaway has been successfully cancelled."
-                }
+                "admin_success": "✅ Giveaway Ended."
             }
         },
         "buttons": {
             "giveawayjoin": {
                 "error": {
-                    "ended": "This giveaway has ended.",
+                    "ended": "❌ This giveaway has ended.",
                     "role": {
-                        "required": "You need the role <@&{role}> to join this giveaway."
+                        "required": "🔒 You need the <@&{role}> role to join."
                     }
                 },
                 "response": {
-                    "unjoin": "You have left the giveaway.",
-                    "join": "You have joined the giveaway."
+                    "unjoin": "📤 You left the giveaway.",
+                    "join": "📥 You joined the giveaway!"
                 }
+            }
+        },
+        "dm": {
+            "winner": "Congratulations! 🎉\nYou have won **{prize}** in **{server}**!\n\n[Click here to jump to the giveaway]({link})"
+        },
+        "reroll": {
+            "success": "✅ Successfully rerolled the giveaway winners!",
+            "error": {
+                "no_participants": "❌ Cannot reroll: No valid participants found."
+            },
+            "announce": {
+                "title": "🎉 REROLL RESULTS",
+                "desc": "New winners have been selected!\n\n🎁 **Prize:** {prize}\n👑 **Winners:** {winners}\n📅 **Original Event:** {time}\n\n_Congratulations to the new winners!_"
             }
         }
     },

@@ -34,7 +34,7 @@ module.exports = {
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageEmojisAndStickers),
 
-    contextMenuCommand: new ContextMenuCommandBuilder().setName('grab Sticker/Emoji').setType(ApplicationCommandType.Message),
+    contextMenuCommand: new ContextMenuCommandBuilder().setName('Grab Sticker/Emoji').setType(ApplicationCommandType.Message),
 
     contextMenuDescription: '🛍️ Grab sticker or emoji from this message.',
 

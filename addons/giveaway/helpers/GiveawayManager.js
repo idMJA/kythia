@@ -2,7 +2,7 @@
  * @namespace: addons/giveaway/helpers/GiveawayManager.js
  * @type: Service/Manager
  * @copyright © 2025 kenndeclouv
- * @version 0.9.14-beta (FIXED SCHEDULER)
+ * @version 0.9.17-beta (UI CONSISTENCY & DM)
  */
 
 const {
@@ -14,11 +14,7 @@ const {
     SeparatorBuilder,
     SeparatorSpacingSize,
     MessageFlags,
-    ComponentType,
-    SectionBuilder,
-    ThumbnailBuilder,
 } = require('discord.js');
-const { Op } = require('sequelize');
 
 class GiveawayManager {
     constructor(container) {
@@ -30,34 +26,21 @@ class GiveawayManager {
         this.t = t;
         this.config = kythiaConfig;
 
-        // Helpers
         this.convertColor = helpers.color.convertColor;
         this.parseDuration = helpers.time.parseDuration;
         this.simpleContainer = helpers.discord.simpleContainer;
 
-        // Scheduler Config
         this.CHECK_INTERVAL = (this.config.addons.giveaway.checkInterval || 20) * 1000;
     }
 
-    // Getter Model (Lazy Load)
     get Giveaway() {
         return this.container.models.Giveaway;
     }
 
-    /**
-     * 🚀 Init Scheduler
-     */
     async init() {
-        // ... check model ...
-
-        // Sync Scheduler via Model Method
         this.logger.info('🎁 Syncing Scheduler...');
-
-        // Ambil semua active dari DB
         const active = await this.Giveaway.findAll({ where: { ended: false } });
 
-        // Push ke Redis via Model wrapper
-        // Kita pake 'active_schedule' sebagai suffix key
         for (const g of active) {
             const endSec = Math.floor(new Date(g.endTime).getTime() / 1000);
             await this.Giveaway.scheduleAdd('active_schedule', endSec, g.messageId);
@@ -66,39 +49,25 @@ class GiveawayManager {
         this.startScheduler();
     }
 
-    /**
-     * ⏰ Scheduler Loop (Recursive Timeout)
-     */
     async startScheduler() {
         try {
             await this.checkExpiredGiveaways();
         } catch (e) {
             this.logger.error('🎁 Giveaway Scheduler Error:', e);
         } finally {
-            // Selalu jalanin lagi walaupun error
             setTimeout(() => this.startScheduler(), this.CHECK_INTERVAL);
         }
     }
 
-    /**
-     * 🔍 Check for expired giveaways in DB (FORCE DB HIT)
-     */
     async checkExpiredGiveaways() {
         const nowSec = Math.floor(Date.now() / 1000);
-
-        // Panggil Helper Model: Ambil ID yang expired
-        // Ini hit ke Redis, bukan DB. Super cepet.
         const expiredIds = await this.Giveaway.scheduleGetExpired('active_schedule', nowSec);
 
         if (expiredIds && expiredIds.length > 0) {
             this.logger.info(`🎁 Found ${expiredIds.length} expired giveaways in Redis.`);
 
             for (const mid of expiredIds) {
-                // 1. Hapus dari jadwal dulu (Atomic-like simulation)
                 await this.Giveaway.scheduleRemove('active_schedule', mid);
-
-                // 2. Baru ambil data detail dari DB/Cache biasa
-                // Pake getCache biasa karena kita query by ID (messageId)
                 const giveaway = await this.Giveaway.findOne({ where: { messageId: mid } });
 
                 if (giveaway && !giveaway.ended) {
@@ -107,10 +76,6 @@ class GiveawayManager {
             }
         }
     }
-
-    // ========================================================
-    // 🎮 CORE ACTIONS
-    // ========================================================
 
     async createGiveaway(interaction) {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -121,10 +86,12 @@ class GiveawayManager {
         const prize = options.getString('prize');
         const color = options.getString('color') || this.config.bot.color;
         const role = options.getRole('role');
+        const description = options.getString('description');
 
         const durationMs = this.parseDuration(durationInput);
         if (!durationMs || durationMs <= 0 || isNaN(durationMs)) {
             const desc = await this.t(interaction, 'giveaway.giveaway.invalid.duration.desc');
+
             const errContainer = await this.simpleContainer(interaction, desc, {
                 color: 'Red',
                 title: await this.t(interaction, 'giveaway.giveaway.invalid.duration.title'),
@@ -138,25 +105,25 @@ class GiveawayManager {
         const endTime = Date.now() + durationMs;
         const endTimestamp = Math.floor(endTime / 1000);
 
-        const { container, components } = await this.buildGiveawayUI(interaction, {
+        const uiComponents = await this.buildGiveawayUI(interaction, {
             prize,
-            endTime: endTimestamp, // Kirim timestamp (angka)
+            endTime: endTimestamp,
             hostId: user.id,
             winnersCount,
             participantsCount: 0,
             ended: false,
             color,
             roleId: role?.id,
+            description: description,
         });
 
         try {
             const message = await channel.send({
-                content: role ? `${role}` : null,
-                components: [container],
+                components: uiComponents,
                 flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2,
             });
 
-            await message.edit({ components: [container, ...components] });
+            await message.edit({ components: uiComponents });
 
             await this.Giveaway.create({
                 messageId: message.id,
@@ -171,16 +138,22 @@ class GiveawayManager {
                 ended: false,
                 roleId: role?.id || null,
                 color: color,
+                description: description,
             });
 
             await this.Giveaway.scheduleAdd('active_schedule', endTimestamp, message.id);
 
             const desc = await this.t(interaction, 'giveaway.giveaway.start.success.desc');
-            const successContainer = await this.simpleContainer(interaction, desc, { color: 'Green' });
+
+            const successContainer = await this.simpleContainer(interaction, desc, {
+                color: 'Green',
+                title: await this.t(interaction, 'giveaway.giveaway.start.success.title'),
+            });
             await interaction.editReply({ components: successContainer, flags: MessageFlags.IsComponentsV2 });
         } catch (error) {
             this.logger.error('Failed to start giveaway:', error);
-            const errContainer = await this.simpleContainer(interaction, error.message, { color: 'Red', title: 'Fatal Error' });
+            const errTitle = await this.t(interaction, 'giveaway.error.fatal.title').catch(() => 'Fatal Error');
+            const errContainer = await this.simpleContainer(interaction, error.message, { color: 'Red', title: errTitle });
             await interaction.editReply({
                 components: errContainer,
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
@@ -191,16 +164,15 @@ class GiveawayManager {
     async endGiveaway(giveawayData, interaction = null) {
         let giveaway = giveawayData;
 
-        // Support manual command trigger
         if (typeof giveawayData === 'string' || (interaction && !giveaway.prize)) {
-            const messageId = interaction?.options.getString('message_id') || giveawayData;
-            // Force DB fetch buat end manual juga biar akurat
+            const messageId = interaction?.options.getString('giveaway') || giveawayData;
             giveaway = await this.Giveaway.findOne({ where: { messageId } });
         }
 
         if (!giveaway || giveaway.ended) {
             if (interaction) {
                 const desc = await this.t(interaction, 'giveaway.giveaway.not.found.desc');
+
                 const err = await this.simpleContainer(interaction, desc, { color: 'Red', title: 'Error' });
                 await interaction.reply({
                     components: err,
@@ -210,7 +182,6 @@ class GiveawayManager {
             return;
         }
 
-        // Safe Parsing Participants
         let participants = [];
         try {
             if (typeof giveaway.participants === 'string') {
@@ -233,22 +204,21 @@ class GiveawayManager {
             }
         }
 
-        // Mark ended in DB
         giveaway.ended = true;
-        await giveaway.save(); // save() biasa lebih aman buat update status critical
+        await giveaway.save();
 
-        // Announce
         const channel = await this.client.channels.fetch(giveaway.channelId).catch(() => null);
         if (channel) {
-            const winnerMentions = winners.length > 0 ? winners.map((id) => `<@${id}>`).join(', ') : 'No valid entrants.';
+            const noWinnerMsg = await this.t(channel, 'giveaway.no.valid.winner');
+            const winnerMentions = winners.length > 0 ? winners.map((id) => `<@${id}>`).join(', ') : noWinnerMsg;
 
             const announceContainer = new ContainerBuilder()
                 .setAccentColor(this.convertColor('Gold', { from: 'discord', to: 'decimal' }))
-                .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## 🎉 CONGRATULATIONS!`))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(await this.t(channel, 'giveaway.end.announce.title')))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
-                        await this.t(channel, 'giveaway.helpers.giveawayManager.announce.desc', {
+                        await this.t(channel, 'giveaway.end.announce.desc', {
                             winners: winnerMentions,
                             prize: giveaway.prize,
                             host: `<@${giveaway.hostId}>`,
@@ -258,10 +228,30 @@ class GiveawayManager {
 
             await channel.send({ components: [announceContainer], flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2 });
 
-            // Update Message Asli (Button Disabled)
+            if (winners.length > 0) {
+                for (const winnerId of winners) {
+                    try {
+                        const user = await this.client.users.fetch(winnerId);
+
+                        const dmContent = await this.t(user, 'giveaway.dm.winner', {
+                            prize: giveaway.prize,
+                            server: channel.guild.name,
+                            link: `https://discord.com/channels/${giveaway.guildId}/${giveaway.channelId}/${giveaway.messageId}`,
+                        });
+
+                        const dmContainer = await this.simpleContainer({ client: this.client, guild: null }, dmContent, {
+                            color: 'Gold',
+                            title: '🎉 Congratulations!',
+                        });
+
+                        await user.send({ components: dmContainer, flags: MessageFlags.IsComponentsV2 }).catch(() => {});
+                    } catch (e) {}
+                }
+            }
+
             const message = await channel.messages.fetch(giveaway.messageId).catch(() => null);
             if (message) {
-                const { container, components } = await this.buildGiveawayUI(channel, {
+                const uiComponents = await this.buildGiveawayUI(channel, {
                     prize: giveaway.prize,
                     endTime: Math.floor(new Date(giveaway.endTime).getTime() / 1000),
                     hostId: giveaway.hostId,
@@ -271,136 +261,217 @@ class GiveawayManager {
                     color: giveaway.color,
                     roleId: giveaway.roleId,
                     winnerList: winnerMentions,
+                    description: description,
                 });
 
-                await message.edit({ components: [container, ...components] });
+                await message.edit({ components: uiComponents });
             }
         }
 
         if (interaction && !interaction.replied) {
-            await interaction.reply({ content: '✅ Giveaway Ended.', ephemeral: true });
+            const successMsg = await this.t(interaction, 'giveaway.giveaway.end.admin_success');
+
+            const successContainer = await this.simpleContainer(interaction, successMsg, { color: 'Green' });
+
+            await interaction.reply({
+                components: successContainer,
+                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+            });
         }
     }
 
-    // ========================================================
-    // 🔘 BUTTON HANDLER (JOIN)
-    // ========================================================
+    async cancelGiveaway(messageId, interaction) {
+        const giveaway = await this.Giveaway.findOne({ where: { messageId } });
 
-    async handleJoin(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        if (!giveaway || giveaway.ended) {
+            const desc = await this.t(interaction, 'giveaway.giveaway.not.found.desc');
+
+            const err = await this.simpleContainer(interaction, desc, { color: 'Red', title: 'Error' });
+            return interaction.reply({
+                components: err,
+                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+            });
+        }
 
         try {
-            const messageId = interaction.message.id;
-            // Pake noCache: true buat tombol join biar real-time
-            const giveaway = await this.Giveaway.findOne({ where: { messageId } });
+            await this.Giveaway.scheduleRemove('active_schedule', messageId);
+        } catch (e) {
+            this.logger.warn(`Failed to remove ${messageId} from scheduler:`, e);
+        }
 
-            if (!giveaway || giveaway.ended) {
-                return interaction.editReply({ content: '❌ This giveaway has ended.' });
+        giveaway.ended = true;
+        await giveaway.save();
+
+        const channel = await this.client.channels.fetch(giveaway.channelId).catch(() => null);
+        if (channel) {
+            const message = await channel.messages.fetch(messageId).catch(() => null);
+            if (message) {
+                const cancelledText = await this.t(channel, 'giveaway.ui.status.cancelled');
+                const uiComponents = await this.buildGiveawayUI(channel, {
+                    prize: giveaway.prize,
+                    endTime: Math.floor(new Date(giveaway.endTime).getTime() / 1000),
+                    hostId: giveaway.hostId,
+                    winnersCount: giveaway.winners,
+                    participantsCount: (Array.isArray(giveaway.participants)
+                        ? giveaway.participants
+                        : JSON.parse(giveaway.participants || '[]')
+                    ).length,
+                    ended: true,
+                    color: this.convertColor('Red', { from: 'discord', to: 'hex' }),
+                    roleId: giveaway.roleId,
+                    winnerList: cancelledText,
+                    description: giveaway.description
+                });
+                await message.edit({ components: uiComponents });
             }
 
-            // Role Check
-            if (giveaway.roleId && !interaction.member.roles.cache.has(giveaway.roleId)) {
-                return interaction.editReply({ content: `🔒 You need the <@&${giveaway.roleId}> role to join.` });
-            }
-
-            // Safe Parsing Logic
-            let participants = [];
-            if (typeof giveaway.participants === 'string') {
-                try {
-                    participants = JSON.parse(giveaway.participants);
-                } catch (e) {
-                    participants = [];
+            const cancelAnnounce = await this.simpleContainer(
+                channel,
+                await this.t(channel, 'giveaway.cancel.announce.desc', { prize: giveaway.prize }),
+                {
+                    title: await this.t(channel, 'giveaway.cancel.announce.title'),
+                    color: 'Red',
                 }
-            } else if (Array.isArray(giveaway.participants)) {
-                participants = giveaway.participants;
-            }
+            );
 
-            const userId = interaction.user.id;
-            let message = '';
+            await channel.send({ components: cancelAnnounce, flags: MessageFlags.IsComponentsV2 });
+        }
 
-            // Toggle
-            if (participants.includes(userId)) {
-                participants = participants.filter((id) => id !== userId);
-                message = '📤 You left the giveaway.';
-            } else {
-                participants.push(userId);
-                message = '📥 You joined the giveaway!';
-            }
+        const successMsg = await this.t(interaction, 'giveaway.cancel.success');
 
-            // Update DB
-            giveaway.participants = participants;
+        const successContainer = await this.simpleContainer(interaction, successMsg, { color: 'Green' });
+        await interaction.reply({ components: successContainer, ephemeral: true, flags: MessageFlags.IsComponentsV2 });
+    }
 
-            // Disini pake save() aja, karena changed() di Sequelize kadang tricky sama JSON array
-            giveaway.changed('participants', true);
-            await giveaway.save();
+    async rerollGiveaway(messageId, interaction) {
+        const giveaway = await this.Giveaway.findOne({ where: { messageId } });
 
-            // Update UI Counter
-            try {
-                const { container, components } = await this.buildGiveawayUI(interaction, {
+        if (!giveaway || !giveaway.ended) {
+            const msg = await this.t(interaction, 'giveaway.giveaway.not.ended.desc');
+            const err = await this.simpleContainer(interaction, msg, { color: 'Red', title: 'Error' });
+            return interaction.reply({ components: err, ephemeral: true, flags: MessageFlags.IsComponentsV2 });
+        }
+
+        let participants = [];
+        try {
+            participants = typeof giveaway.participants === 'string' ? JSON.parse(giveaway.participants) : giveaway.participants;
+        } catch (e) {
+            participants = [];
+        }
+
+        if (participants.length === 0) {
+            const msg = await this.t(interaction, 'giveaway.reroll.error.no_participants');
+            const err = await this.simpleContainer(interaction, msg, { color: 'Red' });
+            return interaction.reply({ components: err, ephemeral: true, flags: MessageFlags.IsComponentsV2 });
+        }
+
+        const winners = [];
+        const pool = [...participants];
+
+        for (let i = 0; i < giveaway.winners; i++) {
+            if (pool.length === 0) break;
+            const index = Math.floor(Math.random() * pool.length);
+            winners.push(pool[index]);
+            pool.splice(index, 1);
+        }
+
+        const winnerMentions = winners.map((id) => `<@${id}>`).join(', ');
+
+        const channel = await this.client.channels.fetch(giveaway.channelId).catch(() => null);
+        if (channel) {
+            const message = await channel.messages.fetch(messageId).catch(() => null);
+            if (message) {
+                const uiComponents = await this.buildGiveawayUI(channel, {
                     prize: giveaway.prize,
                     endTime: Math.floor(new Date(giveaway.endTime).getTime() / 1000),
                     hostId: giveaway.hostId,
                     winnersCount: giveaway.winners,
                     participantsCount: participants.length,
-                    ended: false,
+                    ended: true,
                     color: giveaway.color,
                     roleId: giveaway.roleId,
+                    winnerList: winnerMentions,
+                    description: giveaway.description
                 });
-
-                await interaction.message.edit({ components: [container, ...components] });
-            } catch (e) {
-                this.logger.warn(`Failed to update UI for ${messageId}: ${e.message}`);
+                await message.edit({ components: uiComponents });
             }
 
-            await interaction.editReply({ content: message });
-        } catch (error) {
-            this.logger.error('[GiveawayJoin] Fatal Error:', error);
-            await interaction.editReply({ content: '❌ A fatal error occurred while joining.' });
-        }
-    }
+            const endTimeSec = Math.floor(new Date(giveaway.endTime).getTime() / 1000);
 
-    // ========================================================
-    // 🎨 UI BUILDER (Container V2)
-    // ========================================================
+            const announceMsg = await this.t(channel, 'giveaway.reroll.announce.desc', {
+                winners: winnerMentions,
+                prize: giveaway.prize,
+                time: `<t:${endTimeSec}:R>`,
+                host: `<@${giveaway.hostId}>`,
+            });
+
+            const announceTitle = await this.t(channel, 'giveaway.reroll.announce.title');
+
+            const announceContainer = await this.simpleContainer(interaction, announceMsg, {
+                color: 'Gold',
+                title: announceTitle,
+            });
+
+            await channel.send({
+                components: announceContainer,
+                flags: MessageFlags.IsPersistent | MessageFlags.IsComponentsV2,
+            });
+        }
+
+        const successMsg = await this.t(interaction, 'giveaway.reroll.success');
+        const successContainer = await this.simpleContainer(interaction, successMsg, { color: 'Green' });
+
+        await interaction.reply({ components: successContainer, ephemeral: true, flags: MessageFlags.IsComponentsV2 });
+    }
 
     async buildGiveawayUI(context, data) {
         const accentColor = this.convertColor(data.color || 'Blue', { from: 'hex', to: 'decimal' });
 
-        const container = new ContainerBuilder()
-            .setAccentColor(accentColor)
-            .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## 🎉 ${data.prize}`))
-            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
-
-        let desc = '';
-        if (data.ended) {
-            desc = `**Ended:** <t:${data.endTime}:R>\n**Hosted By:** <@${data.hostId}>\n**Winners:** ${data.winnerList || '...'}`;
-        } else {
-            desc = `**Ends:** <t:${data.endTime}:R> (<t:${data.endTime}:F>)\n**Hosted By:** <@${data.hostId}>\n**Winners:** ${data.winnersCount}`;
-        }
-
-        if (data.roleId) {
-            desc += `\n**Requirement:** <@&${data.roleId}>`;
-        }
-
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(desc));
-
-        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`👥 **Participants:** ${data.participantsCount}`));
-
-        // Footer
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`Kythia Giveaway System`));
-
-        // Button Row
         const joinBtn = new ButtonBuilder()
-            .setCustomId('giveaway_join')
-            .setLabel('Join Giveaway')
+            .setCustomId('giveaway-join')
+            .setLabel(await this.t(context, 'giveaway.ui.button.join'))
             .setStyle(ButtonStyle.Primary)
             .setEmoji('🎉')
             .setDisabled(data.ended);
 
-        const row = new ActionRowBuilder().addComponents(joinBtn);
+        const buttonRow = new ActionRowBuilder().addComponents(joinBtn);
 
-        return { container, components: [row] };
+        const titleText = await this.t(context, 'giveaway.ui.embed.title', { prize: data.prize });
+
+        const container = new ContainerBuilder()
+            .setAccentColor(accentColor)
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(titleText))
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+
+        let desc = '';
+        if (data.ended) {
+            desc = await this.t(context, 'giveaway.ui.embed.desc_ended', {
+                endTime: data.endTime,
+                hostId: data.hostId,
+                winners: data.winnerList || '...',
+            });
+        } else {
+            desc = await this.t(context, 'giveaway.ui.embed.desc_active', {
+                endTime: data.endTime,
+                hostId: data.hostId,
+                winnersCount: data.winnersCount,
+            });
+        }
+
+        if (data.roleId) {
+            desc += await this.t(context, 'giveaway.ui.embed.requirement', { roleId: data.roleId });
+        }
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(desc));
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+        const partText = await this.t(context, 'giveaway.ui.embed.participants', { count: data.participantsCount });
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(partText));
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+        container.addActionRowComponents(buttonRow);
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(await this.t(context, 'giveaway.ui.embed.footer')));
+
+        return [container];
     }
 }
 

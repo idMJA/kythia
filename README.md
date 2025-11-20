@@ -185,6 +185,20 @@ Ensure you have the following software installed:
 2. Type `/ping`, `/help` or `/about` to check the bot's response.
 3. Enjoy using Kythia!
 
+#### 🔌 Optional: Dashboard Setup
+
+If you enabled the dashboard in `kythia.config.js`, you **MUST** configure the Redirect URI in the Discord Developer Portal, otherwise login will fail.
+
+1.  Go to [Discord Developer Portal](https://discord.com/developers/applications) > Select your App.
+2.  Go to the **OAuth2** tab (General, not URL Generator).
+3.  Find the **"Redirects"** section.
+4.  Click **Add Redirect** and enter your dashboard callback URL:
+    * If on Localhost: `http://localhost:3000/auth/discord/callback`
+    * If on VPS (IP): `http://YOUR_VPS_IP:3000/auth/discord/callback`
+    * If using Domain: `https://yourdomain.com/auth/discord/callback`
+5.  **Save Changes**.
+6.  Make sure this URL matches exactly with `DASHBOARD_URL` in your `.env` file (minus the `/auth...` part).
+
 ---
 
 ## 🎮 Usage
