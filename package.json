@@ -19,9 +19,8 @@
     "fix": "biome check --write **/*.js"
   },
   "lint-staged": {
-    "*.js": [
-      "npm run format",
-      "npm run fix"
+    "*.ts": [
+      "bun format"
     ]
   },
   "dependencies": {
